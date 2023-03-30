@@ -5,7 +5,7 @@ A simple React hook to manage your form state. Similar to react-hook-form or for
 ## Installation
 
 ```terminal
-npm install @garystorey/useZodForm
+npm install useZodForm
 ```
 
 ## Usage
