@@ -31,7 +31,7 @@ const onSubmit = (data: FormSchema) => console.log(data)
 const form = useZodForm<FormSchema>({ schema, initialValues, onSubmit })
 const {
   state           // "initial" | "validating" | "valid" | "invalid"
-  getError,       // getErrors('fieldName'):string ("" || error)
+  getError,       // getError('fieldName'):string ("" || error)
   getValue,       // get description for fields
   getDescription, // get description for fields
   getField,       // get all available info for fields
