@@ -12,7 +12,7 @@ npm install @garystorey/useZodForm
 
 ```typescript
 import { z } from "zod"
-import { useZodForm } from "@garystorey/useZodForm"
+import { useZodForm } from "useZodForm"
 
 const schema = z.object({
   firstName: z.string().min(1, "Too short"),
