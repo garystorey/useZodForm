@@ -52,17 +52,18 @@ export function useZodForm<T>({ onSubmit, initialValues, schema }: UseZodFormPro
   const initialBoolean = booleanObjectFromInitial({ ...initialValues } as any)
   const initialString = stringObjectFromInitial({ ...initialValues } as any)
 
+  const [state, setState] = useState<FormState>('initial')
   const [values, setValues] = useState<T>({ ...initialValues })
+
   const [touched, setTouched] = useState({ ...initialBoolean })
   const [dirty, setDirty] = useState({ ...initialBoolean })
   const [errors, setErrors] = useState({ ...initialString })
-  const [state, setState] = useState<FormState>('initial')
 
   const getValue = (key: keyof T) => values[key]
-  const getDescription = (key: keyof T) => schema.shape[key].description
-  const getError = (key: keyof T) => getByValue(errors, key as string)
-  const isDirty = (key: keyof T) => getByValue(dirty, key as string)
-  const isTouched = (key: keyof T) => getByValue(touched, key as string)
+  const getDescription = (key: keyof T) => schema.shape[key].description ?? ''
+  const getError = (key: keyof T) => getByValue(errors, key as string) ?? ''
+  const isDirty = (key: keyof T) => getByValue(dirty, key as string) ?? ''
+  const isTouched = (key: keyof T) => getByValue(touched, key as string) ?? ''
 
   const handleSubmit = useCallback(
     (e: FormEvent<HTMLFormElement>) => {
@@ -120,15 +121,18 @@ export function useZodForm<T>({ onSubmit, initialValues, schema }: UseZodFormPro
 
   const handleBlur = useCallback(
     (e: FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
-      let value: any = e.target.value || ''
+      const value: string = e.target.value || ''
       const name = e.target.name
 
       const result = schema.shape[name].safeParse(value)
+
+      setTouched((prevForm) => ({ ...prevForm, [e.target.name]: true }))
 
       if (result.success) {
         setState(schema.safeParse(values).success ? 'valid' : 'invalid')
         return
       }
+
       setState('invalid')
 
       const errors = result.error.errors.reduce((acc: string, i: z.ZodIssue) => {
@@ -141,17 +145,15 @@ export function useZodForm<T>({ onSubmit, initialValues, schema }: UseZodFormPro
           [name]: errors,
         }
       })
-
-      setTouched((prevForm) => ({ ...prevForm, [e.target.name]: true }))
     },
     [schema, values],
   )
 
   const getField = (key: keyof T): FieldState => ({
     name: String(key),
-    value: getValue(key) as string,
-    description: getDescription(key),
-    error: getError(key),
+    value: (getValue(key) as string) ?? '',
+    description: getDescription(key) ?? '',
+    error: getError(key) ?? '',
     onChange: handleChange,
     onFocus: handleFocus,
     onBlur: handleBlur,

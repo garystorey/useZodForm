@@ -4,8 +4,12 @@ A simple React hook to manage your form state. Similar to react-hook-form or for
 
 ## Installation
 
-```terminal
+```bash
 npm install usezodform
+
+pnpm install usezodform
+
+yarn add usezodform
 ```
 
 ## Usage
@@ -15,8 +19,8 @@ import { z } from "zod"
 import { useZodForm } from "usezodform"
 
 const schema = z.object({
-  firstName: z.string().min(1, "Too short"),
-  lastName: z.string().min(1, "Too short")
+  firstName: z.string().min(1, "Too short").describe('Enter your first name'),
+  lastName: z.string().min(1, "Too short").describe('Enter your last name')
 })
 
 type FormSchema = z.infer<typeof schema>
@@ -44,4 +48,18 @@ const {
   isDirty,        // isDirty('fieldName'):boolean
 } = form
 
+const {
+  name,           // the schema field name
+  value,          // the current value for the given field
+  description,    // the value of the "describe" for the given field
+  errror,         // the validation error message for the given field
+  onChange,       // onChange handler for input
+  onFocus,        // onFocus handler for input
+  OnBlur          // onBlur handler for input
+} = getField("firstName")
+
 ```
+
+## More Info
+
+More to come....
