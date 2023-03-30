@@ -32,13 +32,13 @@ const form = useZodForm<FormSchema>({ schema, initialValues, onSubmit })
 const {
   state           // "initial" | "validating" | "valid" | "invalid"
   getError,       // getError('fieldName'):string ("" || error)
-  getValue,       // get description for fields
-  getDescription, // get description for fields
-  getField,       // get all available info for fields
+  getValue,       // get the value for a field
+  getDescription, // get description for a field
+  getField,       // get all available info for a field
   handleSubmit,   // submit handler for form
-  handleChange,   // change handler for fields
-  handleBlur,     // blur handler for fields
-  handleFocus,    // focus handler for fields
+  handleChange,   // change handler for all fields
+  handleBlur,     // blur handler for all fields
+  handleFocus,    // focus handler for all fields
   values,         // current form values
   isTouched,      // isTouched('fieldName'):boolean
   isDirty,        // isDirty('fieldName'):boolean
