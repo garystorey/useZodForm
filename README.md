@@ -5,14 +5,14 @@ A simple React hook to manage your form state. Similar to react-hook-form or for
 ## Installation
 
 ```terminal
-npm install useZodForm
+npm install usezodform
 ```
 
 ## Usage
 
 ```typescript
 import { z } from "zod"
-import { useZodForm } from "useZodForm"
+import { useZodForm } from "usezodform"
 
 const schema = z.object({
   firstName: z.string().min(1, "Too short"),
