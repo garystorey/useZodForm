@@ -162,16 +162,18 @@ export function useZodForm<T>({ onSubmit, initialValues, schema }: UseZodFormPro
 
   return {
     state,
-    handleChange,
     handleSubmit,
+
+    handleChange,
     handleBlur,
     handleFocus,
 
+    getField,
+    getAllValues,
+
     getLabel,
     getValue,
-    getAllValues,
     getError,
-    getField,
 
     isTouched,
     isDirty,
