@@ -1,10 +1,13 @@
 {
   "name": "usezodform",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "A React hook for managing your form via zod",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
+  "files": [
+    "dist/**/*"
+  ],
   "scripts": {
     "build": "tsup ./src/index.ts --format cjs,esm --dts",
     "lint": "tsc"
