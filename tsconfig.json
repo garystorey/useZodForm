@@ -1,11 +1,16 @@
 {
-    "compilerOptions": {
-        "target": "ES5",
-        "module":"CommonJS",
-        "declaration": true,
-        "outDir": "./dist",
-        "strict": true
-    },
-    "include":["./src"],
-    "exclude":["node_modules","dist","./src/__tests__"]
+  "compilerOptions": {
+    "target": "ES2017",
+    "module": "CommonJS",
+    "declaration": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "noUncheckedIndexedAccess": true,
+    "noEmit": true,
+    "outDir": "./dist",
+    "strict": true
+  },
+  "include": ["./src"],
+  "exclude": ["node_modules", "dist"]
 }
