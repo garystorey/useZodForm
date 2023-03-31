@@ -1,12 +1,12 @@
 import { ChangeEvent, FormEvent, FocusEvent, useCallback, useState } from 'react'
 import { z } from 'zod'
 
-type FormState = 'initial' | 'invalid' | 'valid' | 'validating'
+export type FormState = 'initial' | 'invalid' | 'valid' | 'validating'
 
-type FieldState = {
+export type FieldState = {
   name: string
   value: string
-  description: string
+  label: string
   error: string
   onBlur: (e: FocusEvent<HTMLInputElement | HTMLSelectElement>) => void
   onFocus: (e: FocusEvent<HTMLInputElement | HTMLSelectElement>) => void
@@ -59,11 +59,12 @@ export function useZodForm<T>({ onSubmit, initialValues, schema }: UseZodFormPro
   const [dirty, setDirty] = useState({ ...initialBoolean })
   const [errors, setErrors] = useState({ ...initialString })
 
-  const getValue = (key: keyof T) => values[key]
-  const getDescription = (key: keyof T) => schema.shape[key].description ?? ''
-  const getError = (key: keyof T) => getByValue(errors, key as string) ?? ''
-  const isDirty = (key: keyof T) => getByValue(dirty, key as string) ?? ''
-  const isTouched = (key: keyof T) => getByValue(touched, key as string) ?? ''
+  const getValue = useCallback((key: keyof T) => values[key], [])
+  const getLabel = useCallback((key: keyof T) => schema.shape[key].description ?? '', [])
+  const getError = useCallback((key: keyof T) => getByValue(errors, key as string) ?? '', [])
+  const isDirty = useCallback((key: keyof T) => getByValue(dirty, key as string) ?? '', [])
+  const isTouched = useCallback((key: keyof T) => getByValue(touched, key as string) ?? '', [])
+  const getAllValues = useCallback(() => values, [])
 
   const handleSubmit = useCallback(
     (e: FormEvent<HTMLFormElement>) => {
@@ -152,7 +153,7 @@ export function useZodForm<T>({ onSubmit, initialValues, schema }: UseZodFormPro
   const getField = (key: keyof T): FieldState => ({
     name: String(key),
     value: (getValue(key) as string) ?? '',
-    description: getDescription(key) ?? '',
+    label: getLabel(key) ?? '',
     error: getError(key) ?? '',
     onChange: handleChange,
     onFocus: handleFocus,
@@ -161,15 +162,14 @@ export function useZodForm<T>({ onSubmit, initialValues, schema }: UseZodFormPro
 
   return {
     state,
-    values,
-
     handleChange,
     handleSubmit,
     handleBlur,
     handleFocus,
 
-    getDescription,
+    getLabel,
     getValue,
+    getAllValues,
     getError,
     getField,
 
