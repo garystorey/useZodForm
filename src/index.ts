@@ -4,6 +4,7 @@ import { z } from 'zod'
 export type FormState = 'initial' | 'invalid' | 'valid' | 'validating'
 
 export type FieldState = {
+  id: string
   name: string
   value: string
   label: string
@@ -151,6 +152,7 @@ export function useZodForm<T>({ onSubmit, initialValues, schema }: UseZodFormPro
   )
 
   const getField = (key: keyof T): FieldState => ({
+    id: String(key),
     name: String(key),
     value: (getValue(key) as string) ?? '',
     label: getLabel(key) ?? '',
