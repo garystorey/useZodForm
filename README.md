@@ -80,7 +80,7 @@ When using a custom React component, the code can be simplified by spreading the
 | ------------- | ----------------------------------------- |
 | schema        | any valid `zod` schema                    |
 | initialValues | default values for each field in the form |
-| onSubmit      | callback functionto handle form data      |
+| onSubmit      | callback function to handle form data     |
 
 ---
 

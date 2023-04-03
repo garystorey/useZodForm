@@ -60,12 +60,12 @@ export function useZodForm<T>({ onSubmit, initialValues, schema }: UseZodFormPro
   const [dirty, setDirty] = useState({ ...initialBoolean })
   const [errors, setErrors] = useState({ ...initialString })
 
-  const getValue = useCallback((key: keyof T) => values[key], [])
-  const getLabel = useCallback((key: keyof T) => schema.shape[key].description ?? '', [])
-  const getError = useCallback((key: keyof T) => getByValue(errors, key as string) ?? '', [])
-  const isDirty = useCallback((key: keyof T) => getByValue(dirty, key as string) ?? '', [])
-  const isTouched = useCallback((key: keyof T) => getByValue(touched, key as string) ?? '', [])
-  const getAllValues = useCallback(() => ({ ...values }), [])
+  const getValue = (key: keyof T) => values[key]
+  const getLabel = (key: keyof T) => schema.shape[key].description ?? ''
+  const getError = (key: keyof T) => getByValue(errors, key as string) ?? ''
+  const isDirty = (key: keyof T) => getByValue(dirty, key as string) ?? ''
+  const isTouched = (key: keyof T) => getByValue(touched, key as string) ?? ''
+  const getAllValues = () => ({ ...values })
 
   const handleSubmit = useCallback(
     (e: FormEvent<HTMLFormElement>) => {
