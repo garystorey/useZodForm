@@ -126,7 +126,10 @@ export function useZodForm<T>({ onSubmit, initialValues, schema }: UseZodFormPro
       const value: string = e.target.value || ''
       const name = e.target.name
 
-      const result = schema.shape[name].safeParse(value)
+      const result =
+        e.target.type === 'checkbox'
+          ? schema.shape[name].safeParse(Boolean(value))
+          : schema.shape[name].safeParse(value)
 
       setTouched((prevForm) => ({ ...prevForm, [e.target.name]: true }))
 

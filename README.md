@@ -1,6 +1,7 @@
 # useZodForm
 
 A simple React hook to manage your form state. Similar to react-hook-form or formik.
+You can check it out on [CodeSandbox](https://codesandbox.io/s/testing-usezodform-hook-8ky97s?file=/src/App.tsx).
 
 ## Installation
 
