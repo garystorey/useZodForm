@@ -5,7 +5,7 @@ You can check it out on [CodeSandbox](https://codesandbox.io/s/testing-usezodfor
 
 ## Installation
 
-Use one of the followin commands to install:
+Use one of the following commands to install:
 
 ```bash
 npm install usezodform
@@ -21,7 +21,7 @@ yarn add usezodform
 
 ## Usage
 
-First you need to create a zod schema and infer the type:
+First, create a zod schema and infer the type:
 
 ```tsx
 import { z } from 'zod'
@@ -34,7 +34,7 @@ const schema = z.object({
 type FormSchema = z.infer<typeof schema>
 ```
 
-Once you have created the schema, create the initial values object for the schema and a submit handler that will receive the data from the form.
+Now, create an `initialValues` object for the schema and a form submit handler that will receive the data from the form.
 
 ```tsx
 const initialValues: FormSchema = {
@@ -45,22 +45,28 @@ const initialValues: FormSchema = {
 const onSubmit = (data: FormSchema) => console.log(data)
 ```
 
-Now, import `usezodform` and set up the form:
+Next, import `usezodform` and set up the form:
 
 ```tsx
 import { useZodForm } from 'usezodform'
-const { state, getField, handleSubmit } = useZodForm<FormSchema>({ schema, initialValues, onSubmit })
+const { isValid, getField, handleSubmit } = useZodForm<FormSchema>({ schema, initialValues, onSubmit })
 
-const { name, value, onChange, onBlur, onFocus, error, label } = getField('firstName')
+const fn = getField('firstName')
+const ln = getField('lastName')
 
 return (
   <form onSubmit={handleSubmit}>
     <div>
-      <label htmlFor={name}>{label}</label>
-      <input id={name} name={name} type="text" value={value} onChange={onChange} onBlur={onBlur} onFocus={onFocus} />
-      {error ? <div>{error}</div> : null}
+      <label htmlFor={fn.name}>{fn.label}</label>
+      <input id={fn.name} name={fn.name} type="text" value={fn.value} onBlur={fn.onBlur} onFocus={fn.onFocus} />
+      {fn.error ? <div>{fn.error}</div> : null}
     </div>
-    <button disabled={state !== 'valid'}>Submit</button>
+    <div>
+      <label htmlFor={fn.name}>{fn.label}</label>
+      <input id={fn.name} name={fn.name} type="text" value={fn.value} onBlur={fn.onBlur} onFocus={fn.onFocus} />
+      {fn.error ? <div>{fn.error}</div> : null}
+    </div>
+    <button disabled={!isValid()}>Submit</button>
   </form>
 )
 ```
@@ -68,7 +74,7 @@ return (
 When using a custom React component, the code can be simplified by spreading the results of the `getField` call onto your component:
 
 ```tsx
-<MyIput {...getField('firstName')} />
+<MyCustomInput {...getField('firstName')} />
 ```
 
 <br/>
@@ -77,11 +83,11 @@ When using a custom React component, the code can be simplified by spreading the
 
 `useZodForm` accepts the following properties:
 
-| name          | description                               |
-| ------------- | ----------------------------------------- |
-| schema        | any valid `zod` schema                    |
-| initialValues | default values for each field in the form |
-| onSubmit      | callback function to handle form data     |
+| name          | description                                 |
+| ------------- | ------------------------------------------- |
+| schema        | any valid `zod` schema                      |
+| initialValues | default values for each field in the schema |
+| onSubmit      | callback function to handle form data       |
 
 ---
 
@@ -89,37 +95,38 @@ When using a custom React component, the code can be simplified by spreading the
 
 `useZodForm` returns the following:
 
-| name         | description                                                             |
-| ------------ | ----------------------------------------------------------------------- |
-| state        | current form state: "`initial`", "`validating`","`valid`" , "`invalid`" |
-| getField     | get info for a given field (_see below_)                                |
-| getValue     | get the current value for a field                                       |
-| getAllValues | returns all the current values of all the form fields                   |
-| getError     | returns a string with current error or "" for no error                  |
-| getLabel     | returns the value of zod `describe`                                     |
-| handleSubmit | submit handler for form                                                 |
-| handleChange | change handler for all fields                                           |
-| handleBlur   | blur handler for all fields                                             |
-| handleFocus  | focus handler for all fields                                            |
-| isTouched    | `true/false` - has given field been touched by user                     |
-| isDirty      | `true/false` - has given field been modified by user                    |
+| name           | description                                            |
+| -------------- | ------------------------------------------------------ |
+| getField       | get info for a given field (_see below_)               |
+| getValue       | get the current value for a field                      |
+| getAllValues   | returns all the current values of all the form fields  |
+| getError       | returns a string with current error or "" for no error |
+| getLabel       | returns the value of zod `describe`                    |
+| getDescription | returns the value of zod `describe`                    |
+| handleSubmit   | submit handler for form                                |
+| handleBlur     | blur handler for all fields                            |
+| handleFocus    | focus handler for all fields                           |
+| isTouched      | `true/false` - has given field been touched by user    |
+| isDirty        | `true/false` - has given field been modified by user   |
+| isValid        | `true/false` - is given field currently valid          |
 
 <br/>
 
 `getField` is the default way to get data about a specific field. The other `get*` methods return a single value and are useful to manually pass in the props to your component. `getField` returns the following:
 
-| name     | description                              |
-| -------- | ---------------------------------------- |
-| name     | name of the current field                |
-| id       | id of the current field (_same as name_) |
-| value    | current value of the given field         |
-| label    | current value of zod `describe`          |
-| onChange | change handler for the given field       |
-| onBlur   | blur handler for the given field         |
-| onFocus  | focus handler for the given field        |
-
-**Note**: `onBlur` and `onFocus` are used to track the `touched` values and to perform validation on blur. If you do not need this functionality then you do not have to add those events to your form field.
+| name         | description                              |
+| ------------ | ---------------------------------------- |
+| name         | name of the current field                |
+| id           | id of the current field (_same as name_) |
+| defaultValue | current value of the given field         |
+| label        | current value of zod `describe`          |
+| onBlur       | blur handler for the given field         |
+| onFocus      | focus handler for the given field        |
 
 ## More Info
 
-Although I dont anticpate this breaking any of your code, use at your own risk.
+Although I don't anticpate this breaking any of your code, use at your own risk.
+
+## TODO
+
+- Continue to optimize performance
