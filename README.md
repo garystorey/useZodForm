@@ -62,9 +62,9 @@ return (
       {fn.error ? <div>{fn.error}</div> : null}
     </div>
     <div>
-      <label htmlFor={fn.name}>{fn.label}</label>
-      <input id={fn.name} name={fn.name} type="text" value={fn.value} onBlur={fn.onBlur} onFocus={fn.onFocus} />
-      {fn.error ? <div>{fn.error}</div> : null}
+      <label htmlFor={ln.name}>{ln.label}</label>
+      <input id={ln.name} name={ln.name} type="text" value={ln.value} onBlur={ln.onBlur} onFocus={ln.onFocus} />
+      {ln.error ? <div>{ln.error}</div> : null}
     </div>
     <button disabled={!isValid()}>Submit</button>
   </form>
