@@ -90,7 +90,9 @@ export function useZodForm<T>({
   const initialString = useMemo(() => stringObjectFromInitial({ ...initialValues } as any), [initialValues])
 
   const values = useRef<T>({ ...initialValues })
+
   const touched = useRef<BooleanObject>(booleanObjectFromInitial({ ...initialValues } as any))
+
   const dirty = useRef<BooleanObject>(booleanObjectFromInitial({ ...initialValues } as any))
 
   const [errors, setErrors] = useState({ ...initialString })
@@ -194,6 +196,7 @@ export function useZodForm<T>({
   const getField = (key: keyof T) => {
     const name = String(key)
     const error = getError(key) ?? ''
+    // const hasError = !!error
     const val = (getValue(key) as string) ?? ''
     const label = getLabel(key) ?? ''
 
@@ -206,7 +209,7 @@ export function useZodForm<T>({
         error,
         onFocus: handleFocus,
         onBlur: handleBlur,
-      } as UncontrolledFieldState
+      }
     }
     return {
       id: name,
@@ -216,7 +219,7 @@ export function useZodForm<T>({
       error,
       onFocus: handleFocus,
       onBlur: handleBlur,
-    } as ControlledFieldState
+    }
   }
 
   return {

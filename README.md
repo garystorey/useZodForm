@@ -47,20 +47,34 @@ Next, import `usezodform` and set up the form:
 import { useZodForm } from 'usezodform'
 const { isValid, getField, handleSubmit } = useZodForm<FormSchema>({ schema, initialValues, onSubmit })
 
-const fn = getField('firstName')
-const ln = getField('lastName')
+const firstName = getField('firstName')
+const lastName = getField('lastName')
 
 return (
   <form onSubmit={handleSubmit}>
     <div>
-      <label htmlFor={fn.name}>{fn.label}</label>
-      <input id={fn.name} name={fn.name} type="text" value={fn.value} onBlur={fn.onBlur} onFocus={fn.onFocus} />
-      {fn.error ? <div>{fn.error}</div> : null}
+      <label htmlFor={firstName.name}>{firstName.label}</label>
+      <input
+        type="text"
+        id={firstName.id}
+        name={firstName.name}
+        value={firstName.value}
+        onBlur={firstName.onBlur}
+        onFocus={firstName.onFocus}
+      />
+      {firstName.error ? <div>{firstName.error}</div> : null}
     </div>
     <div>
-      <label htmlFor={ln.name}>{ln.label}</label>
-      <input id={ln.name} name={ln.name} type="text" value={ln.value} onBlur={ln.onBlur} onFocus={ln.onFocus} />
-      {ln.error ? <div>{ln.error}</div> : null}
+      <label htmlFor={lastName.name}>{lastName.label}</label>
+      <input
+        type="text"
+        id={lastName.id}
+        name={lastName.name}
+        value={lastName.value}
+        onBlur={lastName.onBlur}
+        onFocus={lastName.onFocus}
+      />
+      {lastName.error ? <div>{lastName.error}</div> : null}
     </div>
     <button disabled={!isValid()}>Submit</button>
   </form>
