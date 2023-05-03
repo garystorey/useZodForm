@@ -9,13 +9,9 @@ Use one of the following commands to install:
 
 ```bash
 npm install usezodform
-
 //or
-
 pnpm install usezodform
-
 //or
-
 yarn add usezodform
 ```
 
@@ -83,11 +79,12 @@ When using a custom React component, the code can be simplified by spreading the
 
 `useZodForm` accepts the following properties:
 
-| name          | description                                 |
-| ------------- | ------------------------------------------- |
-| schema        | any valid `zod` schema                      |
-| initialValues | default values for each field in the schema |
-| onSubmit      | callback function to handle form data       |
+| name          | description                                        |
+| ------------- | -------------------------------------------------- |
+| schema        | any valid `zod` schema                             |
+| initialValues | default values for each field in the schema        |
+| onSubmit      | callback function to handle form data              |
+| options       | configures the `mode` (uncontrolled vs controlled) |
 
 ---
 
@@ -112,7 +109,7 @@ When using a custom React component, the code can be simplified by spreading the
 
 <br/>
 
-`getField` is the default way to get data about a specific field. The other `get*` methods return a single value and are useful to manually pass in the props to your component. `getField` returns the following:
+`getField` is the default way to get data about a specific field. The other `get*` methods return a single value and are useful to manually pass in the props to your component. By default, `getField` returns the following:
 
 | name         | description                              |
 | ------------ | ---------------------------------------- |
@@ -120,13 +117,13 @@ When using a custom React component, the code can be simplified by spreading the
 | id           | id of the current field (_same as name_) |
 | defaultValue | current value of the given field         |
 | label        | current value of zod `describe`          |
+| error        | current error for the field              |
 | onBlur       | blur handler for the given field         |
 | onFocus      | focus handler for the given field        |
 
-## More Info
-
-Although I don't anticpate this breaking any of your code, use at your own risk.
+**Note:** If you are using `controlled` mode, then `defaultValue` will be returned as `value`.
 
 ## TODO
 
 - Continue to optimize performance
+- Add support for component libraries (MUI, Antd, etc)

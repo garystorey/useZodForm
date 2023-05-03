@@ -1,7 +1,7 @@
 import { FormEvent, FocusEvent, useCallback, useState, useMemo, useRef } from 'react'
 import { z } from 'zod'
 
-export type FieldState = {
+export type UncontrolledFieldState = {
   id: string
   name: string
   defaultValue: string
@@ -11,7 +11,39 @@ export type FieldState = {
   onFocus: (e: FocusEvent<HTMLInputElement | HTMLSelectElement>) => void
 }
 
+export type ControlledFieldState = {
+  id: string
+  name: string
+  value: string
+  label: string
+  error: string
+  onBlur: (e: FocusEvent<HTMLInputElement | HTMLSelectElement>) => void
+  onFocus: (e: FocusEvent<HTMLInputElement | HTMLSelectElement>) => void
+}
+
+export type MUIFieldState = {
+  id: string
+  name: string
+  defaultValue: string
+  label: string
+  error: boolean
+  onFocus: (e: FocusEvent<HTMLInputElement | HTMLSelectElement>) => void
+  onBlur: (e: FocusEvent<HTMLInputElement | HTMLSelectElement>) => void
+  helperText: string
+}
+
+export type FieldState = UncontrolledFieldState | ControlledFieldState | MUIFieldState
 // helper functions
+
+export type UseZodFormOptions = {
+  mode: 'controlled' | 'uncontrolled'
+}
+export type UseZodFormProps<T> = {
+  onSubmit: (data: T) => void
+  initialValues: T
+  schema: z.AnyZodObject
+  options?: UseZodFormOptions
+}
 
 function booleanObjectFromInitial<T extends Record<string, any>>(object: T): Record<string, boolean> {
   let obj = {}
@@ -45,13 +77,16 @@ function getByValue(obj: { [x: string]: any }, key: string): string {
 
 let valid = false
 
-export type UseZodFormProps<T> = {
-  onSubmit: (data: T) => void
-  initialValues: T
-  schema: z.AnyZodObject
+const defaultZodFormOptions = {
+  mode: 'uncontrolled' as const,
 }
 
-export function useZodForm<T>({ onSubmit, initialValues, schema }: UseZodFormProps<T>) {
+export function useZodForm<T>({
+  onSubmit,
+  initialValues,
+  schema,
+  options = defaultZodFormOptions,
+}: UseZodFormProps<T>) {
   const initialString = useMemo(() => stringObjectFromInitial({ ...initialValues } as any), [initialValues])
 
   const values = useRef<T>({ ...initialValues })
@@ -65,11 +100,11 @@ export function useZodForm<T>({ onSubmit, initialValues, schema }: UseZodFormPro
   const getDescription = (key: keyof T) => schema.shape[key].description ?? ''
   const getError = (key: keyof T) => getByValue(errors, key as string) ?? ''
   const isDirty = (key: keyof T) => (getByValue(dirty.current as any, key as string) === 'true' ? true : false ?? false)
-  const getAllValues = () => ({ ...values.current })
-  const isValid = (key: keyof T | '') => (key ? schema.shape[key].safeParse(values.current[key]) : valid)
-
   const isTouched = (key: keyof T) =>
     getByValue(touched.current as any, key as string) === 'true' ? true : false ?? false
+  const getAllValues = () => ({ ...values.current })
+
+  const isValid = (key?: keyof T) => (key ? schema.shape[key].safeParse(values.current[key]) : valid)
 
   const handleSubmit = useCallback(
     (e: FormEvent<HTMLFormElement>) => {
@@ -82,18 +117,18 @@ export function useZodForm<T>({ onSubmit, initialValues, schema }: UseZodFormPro
         values.current = { ...initialValues }
         setErrors({ ...initialString })
         e.currentTarget.reset()
-        return
+      } else {
+        if ('error' in result) {
+          const issues = result.error.errors.reduce((acc, i) => {
+            return {
+              ...acc,
+              [i.path.join('-')]: i.message,
+            }
+          }, {})
+          setErrors({ ...issues })
+          valid = false
+        }
       }
-      if ('error' in result) {
-        const issues = result.error.errors.reduce((acc, i) => {
-          return {
-            ...acc,
-            [i.path.join('-')]: i.message,
-          }
-        }, {})
-        setErrors({ ...issues })
-      }
-      valid = false
     },
     [onSubmit, values, schema, initialString, initialValues],
   )
@@ -156,23 +191,45 @@ export function useZodForm<T>({ onSubmit, initialValues, schema }: UseZodFormPro
     [schema, values],
   )
 
-  const getField = (key: keyof T): FieldState => ({
-    id: String(key),
-    name: String(key),
-    defaultValue: (getValue(key) as string) ?? '',
-    label: getLabel(key) ?? '',
-    error: getError(key) ?? '',
-    onFocus: handleFocus,
-    onBlur: handleBlur,
-  })
+  const getField = (key: keyof T) => {
+    const name = String(key)
+    const error = getError(key) ?? ''
+    const val = (getValue(key) as string) ?? ''
+    const label = getLabel(key) ?? ''
+
+    if (options.mode === 'uncontrolled') {
+      return {
+        id: name,
+        name,
+        defaultValue: val,
+        label,
+        error,
+        onFocus: handleFocus,
+        onBlur: handleBlur,
+      } as UncontrolledFieldState
+    }
+    return {
+      id: name,
+      name,
+      value: val,
+      label,
+      error,
+      onFocus: handleFocus,
+      onBlur: handleBlur,
+    } as ControlledFieldState
+  }
 
   return {
     handleSubmit,
+    touched,
+    dirty,
+
     handleBlur,
     handleFocus,
 
     getField,
     getAllValues,
+
     getLabel,
     getValue,
     getError,
