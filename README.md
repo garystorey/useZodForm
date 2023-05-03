@@ -17,26 +17,17 @@ yarn add usezodform
 
 ## Usage
 
-First, create a zod schema and infer the type:
+First, create a zod schema and a form submit handler.
 
 ```tsx
 import { z } from 'zod'
 
 const schema = z.object({
-  firstName: z.string().min(1, 'Too short').describe('First Name'),
-  lastName: z.string().min(1, 'Too short').describe('Last Name'),
+  firstName: z.string().min(1, 'Too short').describe('First Name').default(''),
+  lastName: z.string().min(1, 'Too short').describe('Last Name').default(''),
 })
 
 type FormSchema = z.infer<typeof schema>
-```
-
-Now, create an `initialValues` object for the schema and a form submit handler that will receive the data from the form.
-
-```tsx
-const initialValues: FormSchema = {
-  firstName: '',
-  lastName: '',
-}
 
 const onSubmit = (data: FormSchema) => console.log(data)
 ```
@@ -45,7 +36,7 @@ Next, import `usezodform` and set up the form:
 
 ```tsx
 import { useZodForm } from 'usezodform'
-const { isValid, getField, handleSubmit } = useZodForm<FormSchema>({ schema, initialValues, onSubmit })
+const { isValid, getField, handleSubmit } = useZodForm<FormSchema>({ schema, onSubmit })
 
 const firstName = getField('firstName')
 const lastName = getField('lastName')
@@ -81,6 +72,8 @@ return (
 )
 ```
 
+**Note:** By design, `useZodForm` does not use the `onChange` event as this can cause the form to re-render unnecessarily.
+
 When using a custom React component, the code can be simplified by spreading the results of the `getField` call onto your component:
 
 ```tsx
@@ -93,14 +86,15 @@ When using a custom React component, the code can be simplified by spreading the
 
 `useZodForm` accepts the following properties:
 
-| name          | description                                        |
-| ------------- | -------------------------------------------------- |
-| schema        | any valid `zod` schema                             |
-| initialValues | default values for each field in the schema        |
-| onSubmit      | callback function to handle form data              |
-| options       | configures the `mode` (uncontrolled vs controlled) |
+| name     | description                                        |
+| -------- | -------------------------------------------------- |
+| schema   | any valid `zod` schema                             |
+| onSubmit | callback function to handle form data              |
+| options  | configures the `mode` (uncontrolled vs controlled) |
 
----
+<br/>
+
+**Note:** To set the initial values used by the form, simply add a `default` to your zod schema fields.
 
 <br/>
 
@@ -137,7 +131,8 @@ When using a custom React component, the code can be simplified by spreading the
 
 **Note:** If you are using `controlled` mode, then `defaultValue` will be returned as `value`.
 
-## TODO
+## TO DO
 
 - Continue to optimize performance
 - Add support for component libraries (MUI, Antd, etc)
+- Add documentation

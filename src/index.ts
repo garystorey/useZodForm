@@ -1,5 +1,5 @@
 import { FormEvent, FocusEvent, useCallback, useState, useMemo, useRef } from 'react'
-import { z } from 'zod'
+import { z, ZodTypeAny } from 'zod'
 
 export type UncontrolledFieldState = {
   id: string
@@ -38,9 +38,9 @@ export type FieldState = UncontrolledFieldState | ControlledFieldState | MUIFiel
 export type UseZodFormOptions = {
   mode: 'controlled' | 'uncontrolled'
 }
+
 export type UseZodFormProps<T> = {
   onSubmit: (data: T) => void
-  initialValues: T
   schema: z.AnyZodObject
   options?: UseZodFormOptions
 }
@@ -75,18 +75,44 @@ function getByValue(obj: { [x: string]: any }, key: string): string {
   return ''
 }
 
+function getDefaults<T extends z.ZodTypeAny>(schema: z.AnyZodObject | z.ZodEffects<any>): z.infer<T> {
+  // Check if it's a ZodEffect
+  if (schema instanceof z.ZodEffects) {
+    // Check if it's a recursive ZodEffect
+    if (schema.innerType() instanceof z.ZodEffects) return getDefaults(schema.innerType())
+    // return schema inner shape as a fresh zodObject
+    return getDefaults(z.ZodObject.create(schema.innerType().shape))
+  }
+
+  function getDefaultValue(schema: z.ZodTypeAny): unknown {
+    if (schema instanceof z.ZodDefault) return schema._def.defaultValue()
+    // return an empty array if it is
+    if (schema instanceof z.ZodArray) return []
+    // return an empty string if it is
+    if (schema instanceof z.ZodString) return ''
+    // return an content of object recursivly
+    if (schema instanceof z.ZodObject) return getDefaults(schema)
+
+    if (!('innerType' in schema._def)) return undefined
+    return getDefaultValue(schema._def.innerType)
+  }
+
+  return Object.fromEntries(
+    Object.entries(schema.shape).map(([key, value]) => {
+      return [key, getDefaultValue(value as ZodTypeAny) ?? '']
+    }),
+  )
+}
+
 let valid = false
 
 const defaultZodFormOptions = {
   mode: 'uncontrolled' as const,
 }
 
-export function useZodForm<T>({
-  onSubmit,
-  initialValues,
-  schema,
-  options = defaultZodFormOptions,
-}: UseZodFormProps<T>) {
+export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOptions }: UseZodFormProps<T>) {
+  const initialValues = getDefaults(schema)
+
   const initialString = useMemo(() => stringObjectFromInitial({ ...initialValues } as any), [initialValues])
 
   const values = useRef<T>({ ...initialValues })
