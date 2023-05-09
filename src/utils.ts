@@ -32,9 +32,9 @@ export function getByValue(obj: { [x: string]: any }, key: string): string {
 
 export function getDefaultValue(schema: z.ZodTypeAny): unknown {
   if (schema instanceof z.ZodDefault) return schema._def.defaultValue()
-  // return an empty array if it is
+  // return an empty array
   if (schema instanceof z.ZodArray) return []
-  // return an empty string if it is
+  // return an empty string
   if (schema instanceof z.ZodString) return ''
   // return an content of object recursivly
   if (schema instanceof z.ZodObject) return getDefaults(schema)

@@ -152,10 +152,10 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
 
     getField,
     getAllValues,
-    getLabel,
     getValue,
     getError,
     getDescription,
+    getDefault: $.getDefaultValue,
 
     isTouched,
     isDirty,
