@@ -27,7 +27,6 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
   const isValid = (key?: keyof T) => (key ? schema.shape[key].safeParse(values.current[key]) : valid)
 
   const getValue = (key: keyof T) => values.current[key]
-  const getLabel = (key: keyof T) => schema.shape[key].description ?? ''
   const getDescription = (key: keyof T) => schema.shape[key].description ?? ''
   const getError = (key: keyof T) => $.getByValue(errors, key as string) ?? ''
   const getAllValues = () => ({ ...values.current })
@@ -37,7 +36,7 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
     const error = getError(key) ?? ''
     // const hasError = !!error
     const val = (getValue(key) as string) ?? ''
-    const label = getLabel(key) ?? ''
+    const label = getDescription(key) ?? ''
 
     if (options.mode === 'uncontrolled' && mode === 'uncontrolled') {
       return {
