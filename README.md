@@ -1,7 +1,6 @@
 # useZodForm
 
-A simple React hook to manage your form state. Similar to react-hook-form or formik.
-You can check it out on [CodeSandbox](https://codesandbox.io/s/testing-usezodform-hook-8ky97s?file=/src/App.tsx).
+A simple React hook to manage your form state. Similar to react-hook-form or formik. See below for example implementations.
 
 ## Installation
 
@@ -10,7 +9,7 @@ Use one of the following commands to install:
 ```bash
 npm install usezodform
 //or
-pnpm install usezodform
+pnpm add usezodform
 //or
 yarn add usezodform
 ```
@@ -67,12 +66,10 @@ return (
       />
       {lastName.error ? <div>{lastName.error}</div> : null}
     </div>
-    <button disabled={!isValid()}>Submit</button>
+    <button>Submit</button>
   </form>
 )
 ```
-
-**Note:** By design, `useZodForm` does not use the `onChange` event as this can cause the form to re-render unnecessarily.
 
 When using a custom React component, the code can be simplified by spreading the results of the `getField` call onto your component:
 
@@ -86,28 +83,26 @@ When using a custom React component, the code can be simplified by spreading the
 
 `useZodForm` accepts the following properties:
 
-| name     | description                               |
-| -------- | ----------------------------------------- |
-| schema   | any valid `zod` schema                    |
-| onSubmit | callback function to handle form data     |
-| options  | `mode`: uncontrolled (default),controlled |
-|          | `validateOnChange`: true/false            |
+| name     | description                                 |
+| -------- | ------------------------------------------- |
+| schema   | any valid `zod` schema                      |
+| onSubmit | callback function to handle form data       |
+| options  | `mode`: uncontrolled (default) / controlled |
 
 <br/>
 
-**Note:** To set the initial values used by the form, simply add a `default` to your zod schema fields.
+**Note:** To set the initial values used by the form, simply add a `default` value to your schema fields.
 
 <br/>
 
 `useZodForm` returns the following:
 
-| name         | description                                          |
-| ------------ | ---------------------------------------------------- |
-| getField     | get info for a given field (_see below_)             |
-| handleSubmit | submit handler for form                              |
-| touched      | `true/false` - has given field been touched by user  |
-| dirty        | `true/false` - has given field been modified by user |
-| isValid      | `true/false` - is given field currently valid        |
+| name         | description                                                                        |
+| ------------ | ---------------------------------------------------------------------------------- |
+| getField     | get info for a given field (_see below_)                                           |
+| handleSubmit | submit handler for form                                                            |
+| touched      | `true/false` - has given field been touched by user (ex: touched.firstName===true) |
+| isValid      | `true/false` - is given field currently valid                                      |
 
 <br/>
 
@@ -126,10 +121,25 @@ The `getField` method returns the following:
 
 \* If you are using `controlled` mode, then `defaultValue` will be returned as `value`.
 
-\*\* `onChange` is only returned when using `controlled` mode or `validateOnChange` is set to `true`.
+\*\* `onChange` is only returned when using `controlled` mode.
 
-## TO DO
+<br/>
+
+## Overriding the form mode
+
+You can now override the form mode (_uncontrolled/controlled_) set in the options by passing `mode` as an second parameter to the `getField` method. For example, `getField('firstName','controlled')` will return the properties of the `firstName` field as a controlled component.
+
+<br/>
+
+## Examples
+
+- [useZodForm - No Component Libary](https://codesandbox.io/s/testing-usezodform-hook-8ky97s?file=/src/App.tsx)
+- [useZodForm- MUI](https://codesandbox.io/s/usezodform-with-mui-87gu0o?file=/src/App.tsx)
+
+<br/>
+
+## To Do
 
 - Continue to optimize performance
-- Add support for component libraries (MUI, Antd, etc)
+- Add support for additional component libraries:
 - Add documentation

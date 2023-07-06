@@ -107,7 +107,6 @@ const defaultZodFormOptions = {
 
 export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOptions }: UseZodFormProps<T>) {
   const initialValues = getDefaults(schema)
-
   const initialString = useMemo(() => stringObjectFromInitial({ ...initialValues } as any), [initialValues])
 
   const values = useRef<T>({ ...initialValues })
@@ -132,6 +131,9 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
   // const getAllValues = () => ({ ...values.current })
 
   const isValid = (key?: keyof T) => (key ? schema.shape[key].safeParse(values.current[key]) : valid)
+
+  // const getDescription = (key: keyof T) => schema.shape[key].description ?? ''
+  // const getAllValues = () => ({ ...values.current })
 
   const handleSubmit = useCallback(
     (e: FormEvent<HTMLFormElement>) => {
