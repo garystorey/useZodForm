@@ -289,6 +289,7 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
         error,
         onFocus: handleFocus,
         onBlur: handleBlur,
+        onChange: handleChange,
       }
     }
     return {
