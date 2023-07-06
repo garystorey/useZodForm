@@ -36,7 +36,7 @@ Next, import `usezodform` and set up the form:
 
 ```tsx
 import { useZodForm } from 'usezodform'
-const { isValid, getField, handleSubmit } = useZodForm<FormSchema>({ schema, onSubmit })
+const { getField, handleSubmit } = useZodForm<FormSchema>({ schema, onSubmit })
 
 const firstName = getField('firstName')
 const lastName = getField('lastName')
@@ -86,11 +86,12 @@ When using a custom React component, the code can be simplified by spreading the
 
 `useZodForm` accepts the following properties:
 
-| name     | description                                        |
-| -------- | -------------------------------------------------- |
-| schema   | any valid `zod` schema                             |
-| onSubmit | callback function to handle form data              |
-| options  | configures the `mode` (uncontrolled vs controlled) |
+| name     | description                               |
+| -------- | ----------------------------------------- |
+| schema   | any valid `zod` schema                    |
+| onSubmit | callback function to handle form data     |
+| options  | `mode`: uncontrolled (default),controlled |
+|          | `validateOnChange`: true/false            |
 
 <br/>
 
@@ -100,36 +101,32 @@ When using a custom React component, the code can be simplified by spreading the
 
 `useZodForm` returns the following:
 
-| name           | description                                            |
-| -------------- | ------------------------------------------------------ |
-| getField       | get info for a given field (_see below_)               |
-| getValue       | get the current value for a field                      |
-| getAllValues   | returns all the current values of all the form fields  |
-| getError       | returns a string with current error or "" for no error |
-| getLabel       | returns the value of zod `describe`                    |
-| getDescription | returns the value of zod `describe`                    |
-| handleSubmit   | submit handler for form                                |
-| handleBlur     | blur handler for all fields                            |
-| handleFocus    | focus handler for all fields                           |
-| isTouched      | `true/false` - has given field been touched by user    |
-| isDirty        | `true/false` - has given field been modified by user   |
-| isValid        | `true/false` - is given field currently valid          |
+| name         | description                                          |
+| ------------ | ---------------------------------------------------- |
+| getField     | get info for a given field (_see below_)             |
+| handleSubmit | submit handler for form                              |
+| touched      | `true/false` - has given field been touched by user  |
+| dirty        | `true/false` - has given field been modified by user |
+| isValid      | `true/false` - is given field currently valid        |
 
 <br/>
 
-`getField` is the default way to get data about a specific field. The other `get*` methods return a single value and are useful to manually pass in the props to your component. By default, `getField` returns the following:
+The `getField` method returns the following:
 
-| name         | description                              |
-| ------------ | ---------------------------------------- |
-| name         | name of the current field                |
-| id           | id of the current field (_same as name_) |
-| defaultValue | current value of the given field         |
-| label        | current value of zod `describe`          |
-| error        | current error for the field              |
-| onBlur       | blur handler for the given field         |
-| onFocus      | focus handler for the given field        |
+| name            | description                              |
+| --------------- | ---------------------------------------- |
+| name            | name of the current field                |
+| id              | id of the current field (_same as name_) |
+| defaultValue \* | current value of the given field         |
+| label           | current value of zod `describe`          |
+| error           | current error for the field              |
+| onBlur          | blur handler for the given field         |
+| onFocus         | focus handler for the given field        |
+| onChange \*\*   | change handler for the given field       |
 
-**Note:** If you are using `controlled` mode, then `defaultValue` will be returned as `value`.
+\* If you are using `controlled` mode, then `defaultValue` will be returned as `value`.
+
+\*\* `onChange` is only returned when using `controlled` mode or `validateOnChange` is set to `true`.
 
 ## TO DO
 

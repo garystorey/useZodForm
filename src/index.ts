@@ -1,42 +1,13 @@
-import { FormEvent, FocusEvent, useCallback, useState, useMemo, useRef } from 'react'
+import { FormEvent, FocusEvent, useCallback, useState, useMemo, useRef, ChangeEvent } from 'react'
+
 import { z, ZodTypeAny } from 'zod'
 
-export type UncontrolledFieldState = {
-  id: string
-  name: string
-  defaultValue: string
-  label: string
-  error: string
-  onBlur: (e: FocusEvent<HTMLInputElement | HTMLSelectElement>) => void
-  onFocus: (e: FocusEvent<HTMLInputElement | HTMLSelectElement>) => void
-}
+type FormField = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
 
-export type ControlledFieldState = {
-  id: string
-  name: string
-  value: string
-  label: string
-  error: string
-  onBlur: (e: FocusEvent<HTMLInputElement | HTMLSelectElement>) => void
-  onFocus: (e: FocusEvent<HTMLInputElement | HTMLSelectElement>) => void
-}
-
-export type MUIFieldState = {
-  id: string
-  name: string
-  defaultValue: string
-  label: string
-  error: boolean
-  onFocus: (e: FocusEvent<HTMLInputElement | HTMLSelectElement>) => void
-  onBlur: (e: FocusEvent<HTMLInputElement | HTMLSelectElement>) => void
-  helperText: string
-}
-
-export type FieldState = UncontrolledFieldState | ControlledFieldState | MUIFieldState
-// helper functions
+type UseZodFormMode = 'controlled' | 'uncontrolled'
 
 export type UseZodFormOptions = {
-  mode: 'controlled' | 'uncontrolled'
+  mode?: UseZodFormMode
 }
 
 export type UseZodFormProps<T> = {
@@ -45,6 +16,12 @@ export type UseZodFormProps<T> = {
   options?: UseZodFormOptions
 }
 
+/**
+ * Generates a new object with boolean properties based on the initial object.
+ *
+ * @param {T} object - The initial object.
+ * @return {Record<string, boolean>} The new object with boolean properties.
+ */
 function booleanObjectFromInitial<T extends Record<string, any>>(object: T): Record<string, boolean> {
   let obj = {}
   for (const [key] of Object.entries({ ...object })) {
@@ -58,6 +35,12 @@ function booleanObjectFromInitial<T extends Record<string, any>>(object: T): Rec
 
 type BooleanObject = ReturnType<typeof booleanObjectFromInitial>
 
+/**
+ * Generates a string object from an initial object.
+ *
+ * @param {T extends Record<string, any>} object - The initial object.
+ * @return {Record<string, string>} The generated string object.
+ */
 function stringObjectFromInitial<T extends Record<string, any>>(object: T): Record<string, string> {
   let obj = {}
   for (const [key] of Object.entries({ ...object })) {
@@ -75,6 +58,12 @@ function getByValue(obj: { [x: string]: any }, key: string): string {
   return ''
 }
 
+/**
+ * Retrieves the default values of a Zod schema.
+ *
+ * @param {z.AnyZodObject | z.ZodEffects<any>} schema - The Zod schema or Zod effect.
+ * @return {z.infer<T>} The default values of the schema.
+ */
 function getDefaults<T extends z.ZodTypeAny>(schema: z.AnyZodObject | z.ZodEffects<any>): z.infer<T> {
   // Check if it's a ZodEffect
   if (schema instanceof z.ZodEffects) {
@@ -84,6 +73,12 @@ function getDefaults<T extends z.ZodTypeAny>(schema: z.AnyZodObject | z.ZodEffec
     return getDefaults(z.ZodObject.create(schema.innerType().shape))
   }
 
+  /**
+   * Retrieves the default value for a given schema.
+   *
+   * @param {z.ZodTypeAny} schema - The schema to retrieve the default value from.
+   * @return {unknown} The default value of the schema.
+   */
   function getDefaultValue(schema: z.ZodTypeAny): unknown {
     if (schema instanceof z.ZodDefault) return schema._def.defaultValue()
     // return an empty array if it is
@@ -107,8 +102,8 @@ function getDefaults<T extends z.ZodTypeAny>(schema: z.AnyZodObject | z.ZodEffec
 let valid = false
 
 const defaultZodFormOptions = {
-  mode: 'uncontrolled' as const,
-}
+  mode: 'uncontrolled',
+} as const
 
 export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOptions }: UseZodFormProps<T>) {
   const initialValues = getDefaults(schema)
@@ -119,18 +114,22 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
 
   const touched = useRef<BooleanObject>(booleanObjectFromInitial({ ...initialValues } as any))
 
-  const dirty = useRef<BooleanObject>(booleanObjectFromInitial({ ...initialValues } as any))
+  // const dirty = useRef<BooleanObject>(
+  //   booleanObjectFromInitial({ ...initialValues } as any)
+  // )
 
   const [errors, setErrors] = useState({ ...initialString })
 
   const getValue = (key: keyof T) => values.current[key]
   const getLabel = (key: keyof T) => schema.shape[key].description ?? ''
-  const getDescription = (key: keyof T) => schema.shape[key].description ?? ''
   const getError = (key: keyof T) => getByValue(errors, key as string) ?? ''
-  const isDirty = (key: keyof T) => (getByValue(dirty.current as any, key as string) === 'true' ? true : false ?? false)
-  const isTouched = (key: keyof T) =>
-    getByValue(touched.current as any, key as string) === 'true' ? true : false ?? false
-  const getAllValues = () => ({ ...values.current })
+
+  // const getDescription = (key: keyof T) => schema.shape[key].description ?? ""
+  // const isDirty = (key: keyof T) =>
+  //   getByValue(dirty.current as any, key as string) === "true" ? true : false ?? false
+  // const isTouched = (key: keyof T) =>
+  //   getByValue(touched.current as any, key as string) === "true" ? true : false ?? false
+  // const getAllValues = () => ({ ...values.current })
 
   const isValid = (key?: keyof T) => (key ? schema.shape[key].safeParse(values.current[key]) : valid)
 
@@ -141,7 +140,7 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
       if (result.success) {
         onSubmit(values.current)
         touched.current = booleanObjectFromInitial({ ...initialValues } as any)
-        dirty.current = booleanObjectFromInitial({ ...initialValues } as any)
+        // dirty.current = booleanObjectFromInitial({ ...initialValues } as any)
         values.current = { ...initialValues }
         setErrors({ ...initialString })
         e.currentTarget.reset()
@@ -161,7 +160,7 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
     [onSubmit, values, schema, initialString, initialValues],
   )
 
-  const handleFocus = useCallback((e: FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleFocus = useCallback((e: FocusEvent<FormField>) => {
     setErrors((prevErrors) => ({
       ...prevErrors,
       [e.target.name]: '',
@@ -169,8 +168,8 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
     touched.current[e.target.name as string] = true
   }, [])
 
-  const handleBlur = useCallback(
-    (e: FocusEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = useCallback(
+    (e: ChangeEvent<FormField>) => {
       let value: any = e.target.value || ''
       const name = e.target.name as string
       if (e.target.tagName === 'INPUT') {
@@ -185,7 +184,54 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
       const result = schema.shape[name].safeParse(value)
 
       touched.current[name] = true
-      dirty.current[name] = true
+      // dirty.current[name] = true
+
+      values.current = {
+        ...values.current,
+        [name]: value,
+      }
+
+      if (result.success) {
+        setErrors((prevErrors) => {
+          return {
+            ...prevErrors,
+            [name]: '',
+          }
+        })
+        return
+      }
+
+      const issues = result.error.errors.reduce((acc: string, i: z.ZodIssue) => {
+        return (acc += i.message)
+      }, '')
+
+      setErrors((prevErrors) => {
+        return {
+          ...prevErrors,
+          [name]: issues,
+        }
+      })
+    },
+    [schema, values],
+  )
+
+  const handleBlur = useCallback(
+    (e: FocusEvent<FormField>) => {
+      let value: any = e.target.value || ''
+      const name = e.target.name as string
+      if (e.target.tagName === 'INPUT') {
+        if (e.target.type === 'checkbox') {
+          const el = e.target as HTMLInputElement
+          value = el.checked
+        }
+        if (e.target.type === 'number') {
+          value = Number(value)
+        }
+      }
+      const result = schema.shape[name].safeParse(value)
+
+      touched.current[name] = true
+      // dirty.current[name] = true
 
       values.current = {
         ...values.current,
@@ -219,14 +265,20 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
     [schema, values],
   )
 
-  const getField = (key: keyof T) => {
+  /**
+   * Retrieves a field's information based on the given key.
+   *
+   * @param {keyof T} key - The key of the field.
+   * @param {UseZodFormMode} mode - The mode of the form.
+   * @return {object} - The field information.
+   */
+  const getField = (key: keyof T, mode: UseZodFormMode = 'uncontrolled') => {
     const name = String(key)
     const error = getError(key) ?? ''
-    // const hasError = !!error
     const val = (getValue(key) as string) ?? ''
     const label = getLabel(key) ?? ''
 
-    if (options.mode === 'uncontrolled') {
+    if (options.mode === 'uncontrolled' || mode !== 'controlled') {
       return {
         id: name,
         name,
@@ -245,27 +297,14 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
       error,
       onFocus: handleFocus,
       onBlur: handleBlur,
+      onChange: handleChange,
     }
   }
 
   return {
     handleSubmit,
-    touched,
-    dirty,
-
-    handleBlur,
-    handleFocus,
-
     getField,
-    getAllValues,
-
-    getLabel,
-    getValue,
-    getError,
-    getDescription,
-
-    isTouched,
-    isDirty,
+    touched: touched.current,
     isValid,
   }
 }
