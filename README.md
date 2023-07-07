@@ -35,13 +35,13 @@ Next, import `usezodform` and set up the form:
 
 ```tsx
 import { useZodForm } from 'usezodform'
-const { getField, handleSubmit } = useZodForm<FormSchema>({ schema, onSubmit })
+const { getField, getForm } = useZodForm<FormSchema>({ schema, onSubmit })
 
 const firstName = getField('firstName')
 const lastName = getField('lastName')
 
 return (
-  <form onSubmit={handleSubmit}>
+  <form {...getForm()}>
     <div>
       <label htmlFor={firstName.name}>{firstName.label}</label>
       <input
@@ -77,6 +77,8 @@ When using a custom React component, the code can be simplified by spreading the
 <MyCustomInput {...getField('firstName')} />
 ```
 
+It is also recommended to `memo`-ize your components to reduce re-rendering.
+
 <br/>
 
 ## Props
@@ -99,10 +101,22 @@ When using a custom React component, the code can be simplified by spreading the
 
 | name         | description                                                                        |
 | ------------ | ---------------------------------------------------------------------------------- |
-| getField     | get info for a given field (_see below_)                                           |
-| handleSubmit | submit handler for form                                                            |
+| getField     | get the props for a given form field                                               |
+| getForm      | get the props for the form                                                         |
 | touched      | `true/false` - has given field been touched by user (ex: touched.firstName===true) |
-| isValid      | `true/false` - is given field currently valid                                      |
+| dirty        | `true/false` - has given field been modified by user (ex: dirty.firstName===true)  |
+| isValid      | `true/false` - given field (or form if no name passed) is currently valid (ex: isValid('firstName') ) |
+| handleChange | `onChange` handler for a form field (_onChange is not used by default_)             |
+
+<br/>
+
+The `getForm` method returns the following:
+
+| name            | description                              |
+| --------------- | ---------------------------------------- |
+| onFocus         | focus handler for all form fields        |
+| onBlur          | blur handler for all form fields         |
+| onSubmit        | submit handler for the form              |
 
 <br/>
 
@@ -115,13 +129,8 @@ The `getField` method returns the following:
 | defaultValue \* | current value of the given field         |
 | label           | current value of zod `describe`          |
 | error           | current error for the field              |
-| onBlur          | blur handler for the given field         |
-| onFocus         | focus handler for the given field        |
-| onChange \*\*   | change handler for the given field       |
 
 \* If you are using `controlled` mode, then `defaultValue` will be returned as `value`.
-
-\*\* `onChange` is only returned when using `controlled` mode.
 
 <br/>
 
@@ -140,6 +149,7 @@ You can now override the form mode (_uncontrolled/controlled_) set in the option
 
 ## To Do
 
+- Finalize API for v1.0
 - Continue to optimize performance
-- Add support for additional component libraries:
+- Add examples for additional component libraries
 - Add documentation

@@ -6,6 +6,20 @@ type FormField = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
 
 type UseZodFormMode = 'controlled' | 'uncontrolled'
 
+type UnControlledField = {
+  id: string
+  name: string
+  defaultValue: string
+  label: string
+  error: string
+}
+
+type ControlledField = Omit<UnControlledField, 'defaultValue'> & {
+  value: string
+}
+
+type UnControlledOrControlledField = ControlledField | UnControlledField
+
 export type UseZodFormOptions = {
   mode?: UseZodFormMode
 }
@@ -112,10 +126,8 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
   const values = useRef<T>({ ...initialValues })
 
   const touched = useRef<BooleanObject>(booleanObjectFromInitial({ ...initialValues } as any))
-
-  // const dirty = useRef<BooleanObject>(
-  //   booleanObjectFromInitial({ ...initialValues } as any)
-  // )
+  const dirty = useRef<BooleanObject>(booleanObjectFromInitial({ ...initialValues } as any))
+  const previousValue = useRef<unknown>('')
 
   const [errors, setErrors] = useState({ ...initialString })
 
@@ -123,17 +135,7 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
   const getLabel = (key: keyof T) => schema.shape[key].description ?? ''
   const getError = (key: keyof T) => getByValue(errors, key as string) ?? ''
 
-  // const getDescription = (key: keyof T) => schema.shape[key].description ?? ""
-  // const isDirty = (key: keyof T) =>
-  //   getByValue(dirty.current as any, key as string) === "true" ? true : false ?? false
-  // const isTouched = (key: keyof T) =>
-  //   getByValue(touched.current as any, key as string) === "true" ? true : false ?? false
-  // const getAllValues = () => ({ ...values.current })
-
   const isValid = (key?: keyof T) => (key ? schema.shape[key].safeParse(values.current[key]) : valid)
-
-  // const getDescription = (key: keyof T) => schema.shape[key].description ?? ''
-  // const getAllValues = () => ({ ...values.current })
 
   const handleSubmit = useCallback(
     (e: FormEvent<HTMLFormElement>) => {
@@ -142,7 +144,7 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
       if (result.success) {
         onSubmit(values.current)
         touched.current = booleanObjectFromInitial({ ...initialValues } as any)
-        // dirty.current = booleanObjectFromInitial({ ...initialValues } as any)
+        dirty.current = booleanObjectFromInitial({ ...initialValues } as any)
         values.current = { ...initialValues }
         setErrors({ ...initialString })
         e.currentTarget.reset()
@@ -162,31 +164,27 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
     [onSubmit, values, schema, initialString, initialValues],
   )
 
-  const handleFocus = useCallback((e: FocusEvent<FormField>) => {
-    setErrors((prevErrors) => ({
-      ...prevErrors,
-      [e.target.name]: '',
-    }))
-    touched.current[e.target.name as string] = true
-  }, [])
-
   const handleChange = useCallback(
     (e: ChangeEvent<FormField>) => {
-      let value: any = e.target.value || ''
-      const name = e.target.name as string
-      if (e.target.tagName === 'INPUT') {
-        if (e.target.type === 'checkbox') {
+      const el = e.target
+      const name = el.name || ''
+      if (!name) return
+
+      let value: unknown = el.value
+
+      if (el.tagName === 'INPUT') {
+        if (el.type === 'checkbox') {
           const el = e.target as HTMLInputElement
           value = el.checked
         }
-        if (e.target.type === 'number') {
+        if (el.type === 'number') {
           value = Number(value)
         }
       }
       const result = schema.shape[name].safeParse(value)
 
       touched.current[name] = true
-      // dirty.current[name] = true
+      dirty.current[name] = true
 
       values.current = {
         ...values.current,
@@ -217,29 +215,46 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
     [schema, values],
   )
 
+  const handleFocus = useCallback((e: FocusEvent<HTMLFormElement>) => {
+    const { name = '', value = '' } = e.target
+    if (name) {
+      setErrors((prevErrors) => ({
+        ...prevErrors,
+        [e.target.name]: '',
+      }))
+      touched.current[name] = true
+      previousValue.current = value
+    }
+  }, [])
+
   const handleBlur = useCallback(
-    (e: FocusEvent<FormField>) => {
-      let value: any = e.target.value || ''
-      const name = e.target.name as string
+    (e: FocusEvent<HTMLFormElement>) => {
+      const name = e.target.name || ''
+      if (!name || name === '') return
+
+      let value = e.target.value || ''
+      if (previousValue.current !== value) {
+        dirty.current[name] = true
+      }
+
       if (e.target.tagName === 'INPUT') {
         if (e.target.type === 'checkbox') {
-          const el = e.target as HTMLInputElement
-          value = el.checked
+          console.log('input:checkbox')
+          value = !!e.target.checked
         }
         if (e.target.type === 'number') {
+          console.log('input:number')
           value = Number(value)
         }
       }
-      const result = schema.shape[name].safeParse(value)
 
       touched.current[name] = true
-      // dirty.current[name] = true
-
       values.current = {
         ...values.current,
         [name]: value,
       }
 
+      const result = schema.shape[name].safeParse(value)
       if (result.success) {
         valid = schema.safeParse(values.current).success
         setErrors((prevErrors) => {
@@ -267,14 +282,22 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
     [schema, values],
   )
 
+  const getForm = () => {
+    return {
+      onSubmit: handleSubmit,
+      onFocus: handleFocus,
+      onBlur: handleBlur,
+    }
+  }
+
   /**
    * Retrieves a field's information based on the given key.
    *
    * @param {keyof T} key - The key of the field.
    * @param {UseZodFormMode} mode - The mode of the form.
-   * @return {object} - The field information.
+   * @return {UnControlledOrControlledField} - The field information.
    */
-  const getField = (key: keyof T, mode: UseZodFormMode = 'uncontrolled') => {
+  const getField = (key: keyof T, mode: UseZodFormMode = 'uncontrolled'): UnControlledOrControlledField => {
     const name = String(key)
     const error = getError(key) ?? ''
     const val = (getValue(key) as string) ?? ''
@@ -287,9 +310,6 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
         defaultValue: val,
         label,
         error,
-        onFocus: handleFocus,
-        onBlur: handleBlur,
-        onChange: handleChange,
       }
     }
     return {
@@ -298,16 +318,15 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
       value: val,
       label,
       error,
-      onFocus: handleFocus,
-      onBlur: handleBlur,
-      onChange: handleChange,
     }
   }
 
   return {
-    handleSubmit,
+    handleChange,
     getField,
+    getForm,
     touched: touched.current,
+    dirty: dirty.current,
     isValid,
   }
 }
