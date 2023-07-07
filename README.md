@@ -49,8 +49,6 @@ return (
         id={firstName.id}
         name={firstName.name}
         value={firstName.value}
-        onBlur={firstName.onBlur}
-        onFocus={firstName.onFocus}
       />
       {firstName.error ? <div>{firstName.error}</div> : null}
     </div>
@@ -61,8 +59,6 @@ return (
         id={lastName.id}
         name={lastName.name}
         value={lastName.value}
-        onBlur={lastName.onBlur}
-        onFocus={lastName.onFocus}
       />
       {lastName.error ? <div>{lastName.error}</div> : null}
     </div>
