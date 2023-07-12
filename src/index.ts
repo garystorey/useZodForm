@@ -310,7 +310,7 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
         defaultValue: val,
         label,
         error,
-      }
+      } as UnControlledField
     }
     return {
       id: name,
@@ -318,7 +318,7 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
       value: val,
       label,
       error,
-    }
+    } as ControlledField
   }
 
   return {
