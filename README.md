@@ -138,7 +138,7 @@ You can now override the form mode (_uncontrolled/controlled_) set in the option
 
 ## To Do
 
-- Finalize API for v1.0
+- Finalize API for v1.0.
 - Continue to optimize performance
 - Add examples for additional component libraries
-- Add documentation
+- Create documentation website
