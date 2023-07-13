@@ -1,6 +1,6 @@
 {
   "name": "usezodform",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "A React hook for managing your form via zod",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
