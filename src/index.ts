@@ -1,125 +1,17 @@
 import { FormEvent, FocusEvent, useCallback, useState, useMemo, useRef, ChangeEvent } from 'react'
+import { z } from 'zod'
+import type {
+  UseZodFormProps,
+  UseZodFormMode,
+  UnControlledOrControlledField,
+  UnControlledField,
+  ControlledField,
+  FormField,
+  ZodFormProps,
+} from './types'
+import { booleanObjectFromInitial, getByValue, getDefaults, stringObjectFromInitial } from './utils'
 
-import { z, ZodTypeAny } from 'zod'
-
-type FormField = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-
-export type UseZodFormMode = 'controlled' | 'uncontrolled'
-
-export type UnControlledField = {
-  id: string
-  name: string
-  defaultValue: string
-  label: string
-  error: string
-}
-
-export type ControlledField = Omit<UnControlledField, 'defaultValue'> & {
-  value: string
-}
-
-export type UnControlledOrControlledField = ControlledField | UnControlledField
-
-export type UseZodFormOptions = {
-  mode?: UseZodFormMode
-}
-
-export type UseZodFormProps<T> = {
-  onSubmit: (data: T) => void
-  schema: z.AnyZodObject
-  options?: UseZodFormOptions
-}
-
-/**
- * Generates a new object with boolean properties based on the initial object.
- *
- * @param {T} object - The initial object.
- * @return {Record<string, boolean>} The new object with boolean properties.
- */
-function booleanObjectFromInitial<T extends Record<string, any>>(object: T): Record<string, boolean> {
-  let obj = {}
-  for (const [key] of Object.entries({ ...object })) {
-    obj = {
-      ...obj,
-      [key]: false,
-    }
-  }
-  return obj
-}
-
-type BooleanObject = ReturnType<typeof booleanObjectFromInitial>
-
-/**
- * Generates a string object from an initial object.
- *
- * @param {T extends Record<string, any>} object - The initial object.
- * @return {Record<string, string>} The generated string object.
- */
-function stringObjectFromInitial<T extends Record<string, any>>(object: T): Record<string, string> {
-  let obj = {}
-  for (const [key] of Object.entries({ ...object })) {
-    obj = {
-      ...obj,
-      [key]: '',
-    }
-  }
-  return obj
-}
-
-/**
- * Returns the value associated with a given key from an object.
- *
- * @param {Object} obj - The object to search for the key-value pair.
- * @param {string} key - The key to search for in the object.
- * @return {string} The value associated with the given key, or an empty string if the key is not found.
- */
-function getByValue(obj: { [x: string]: any }, key: string): string {
-  if (!obj || typeof obj !== 'object') return ''
-  if (key in obj) return obj[key]
-  return ''
-}
-
-/**
- * Retrieves the default values of a Zod schema.
- *
- * @param {z.AnyZodObject | z.ZodEffects<any>} schema - The Zod schema or Zod effect.
- * @return {z.infer<T>} The default values of the schema.
- */
-function getDefaults<T extends z.ZodTypeAny>(schema: z.AnyZodObject | z.ZodEffects<any>): z.infer<T> {
-  // Check if it's a ZodEffect
-  if (schema instanceof z.ZodEffects) {
-    // Check if it's a recursive ZodEffect
-    if (schema.innerType() instanceof z.ZodEffects) return getDefaults(schema.innerType())
-    // return schema inner shape as a fresh zodObject
-    return getDefaults(z.ZodObject.create(schema.innerType().shape))
-  }
-
-  /**
-   * Retrieves the default value for a given schema.
-   *
-   * @param {z.ZodTypeAny} schema - The schema to retrieve the default value from.
-   * @return {unknown} The default value of the schema.
-   */
-  function getDefaultValue(schema: z.ZodTypeAny): unknown {
-    if (schema instanceof z.ZodDefault) return schema._def.defaultValue()
-    // return an empty array if it is
-    if (schema instanceof z.ZodArray) return []
-    // return an empty string if it is
-    if (schema instanceof z.ZodString) return ''
-    // return an content of object recursivly
-    if (schema instanceof z.ZodObject) return getDefaults(schema)
-
-    if (!('innerType' in schema._def)) return undefined
-    return getDefaultValue(schema._def.innerType)
-  }
-
-  return Object.fromEntries(
-    Object.entries(schema.shape).map(([key, value]) => {
-      return [key, getDefaultValue(value as ZodTypeAny) ?? '']
-    }),
-  )
-}
-
+import type { InitialBooleanObject } from './utils'
 let valid = false
 
 const defaultZodFormOptions = {
@@ -132,8 +24,8 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
 
   const values = useRef<T>({ ...initialValues })
 
-  const touched = useRef<BooleanObject>(booleanObjectFromInitial({ ...initialValues } as any))
-  const dirty = useRef<BooleanObject>(booleanObjectFromInitial({ ...initialValues } as any))
+  const touched = useRef<InitialBooleanObject>(booleanObjectFromInitial({ ...initialValues } as any))
+  const dirty = useRef<InitialBooleanObject>(booleanObjectFromInitial({ ...initialValues } as any))
   const previousValue = useRef<unknown>('')
 
   const [errors, setErrors] = useState({ ...initialString })
@@ -289,7 +181,11 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
     [schema, values],
   )
 
-  const getForm = () => {
+  /**
+   * Generates a form object with event handlers.
+   *
+   * @return {ZodFormProps} - The form properties  */
+  const getForm = (): ZodFormProps => {
     return {
       onSubmit: handleSubmit,
       onFocus: handleFocus,
@@ -302,7 +198,7 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
    *
    * @param {keyof T} key - The key of the field.
    * @param {UseZodFormMode} mode - The mode of the form.
-   * @return {UnControlledOrControlledField} - The field information.
+   * @return {UnControlledOrControlledField} - The field properties.
    */
   const getField = (key: keyof T, mode: UseZodFormMode = 'uncontrolled'): UnControlledOrControlledField => {
     const name = String(key)

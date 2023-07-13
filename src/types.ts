@@ -1,37 +1,34 @@
-import { FocusEvent } from 'react'
 import { z } from 'zod'
+import { FocusEvent } from 'react'
 
-export type UncontrolledFieldState = {
+export type FormField = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+
+export type UnControlledField = {
   id: string
   name: string
   defaultValue: string
   label: string
   error: string
-  onBlur: (e: FocusEvent<HTMLInputElement>) => void
-  onFocus: (e: FocusEvent<HTMLInputElement>) => void
 }
 
-export type ControlledFieldState = {
-  id: string
-  name: string
-  label: string
-  error: string
-  onBlur: (e: FocusEvent<HTMLInputElement>) => void
-  onFocus: (e: FocusEvent<HTMLInputElement>) => void
+export type ControlledField = Omit<UnControlledField, 'defaultValue'> & {
+  value: string
 }
 
-export type FieldState = UncontrolledFieldState | ControlledFieldState
+export type UnControlledOrControlledField = ControlledField | UnControlledField
 
-export type FormMode = 'controlled' | 'uncontrolled'
-export type ControlledForm = Omit<FormMode, 'uncontrolled'>
-export type UncontrolledForm = Omit<FormMode, 'controlled'>
-
+export type UseZodFormMode = 'controlled' | 'uncontrolled'
 export type UseZodFormOptions = {
-  mode: FormMode
+  mode?: UseZodFormMode
 }
 
 export type UseZodFormProps<T> = {
   onSubmit: (data: T) => void
   schema: z.AnyZodObject
   options?: UseZodFormOptions
+}
+export type ZodFormProps = {
+  onSubmit: (data: any) => void
+  onFocus: (e: FocusEvent<HTMLFormElement>) => void
+  onBlur: (e: FocusEvent<HTMLFormElement>) => void
 }
