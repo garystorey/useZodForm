@@ -4,9 +4,9 @@ import { z, ZodTypeAny } from 'zod'
 
 type FormField = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
 
-type UseZodFormMode = 'controlled' | 'uncontrolled'
+export type UseZodFormMode = 'controlled' | 'uncontrolled'
 
-type UnControlledField = {
+export type UnControlledField = {
   id: string
   name: string
   defaultValue: string
@@ -14,11 +14,11 @@ type UnControlledField = {
   error: string
 }
 
-type ControlledField = Omit<UnControlledField, 'defaultValue'> & {
+export type ControlledField = Omit<UnControlledField, 'defaultValue'> & {
   value: string
 }
 
-type UnControlledOrControlledField = ControlledField | UnControlledField
+export type UnControlledOrControlledField = ControlledField | UnControlledField
 
 export type UseZodFormOptions = {
   mode?: UseZodFormMode
@@ -66,6 +66,13 @@ function stringObjectFromInitial<T extends Record<string, any>>(object: T): Reco
   return obj
 }
 
+/**
+ * Returns the value associated with a given key from an object.
+ *
+ * @param {Object} obj - The object to search for the key-value pair.
+ * @param {string} key - The key to search for in the object.
+ * @return {string} The value associated with the given key, or an empty string if the key is not found.
+ */
 function getByValue(obj: { [x: string]: any }, key: string): string {
   if (!obj || typeof obj !== 'object') return ''
   if (key in obj) return obj[key]

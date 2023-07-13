@@ -44,22 +44,12 @@ return (
   <form {...getForm()}>
     <div>
       <label htmlFor={firstName.name}>{firstName.label}</label>
-      <input
-        type="text"
-        id={firstName.id}
-        name={firstName.name}
-        value={firstName.value}
-      />
+      <input type="text" id={firstName.id} name={firstName.name} value={firstName.value} />
       {firstName.error ? <div>{firstName.error}</div> : null}
     </div>
     <div>
       <label htmlFor={lastName.name}>{lastName.label}</label>
-      <input
-        type="text"
-        id={lastName.id}
-        name={lastName.name}
-        value={lastName.value}
-      />
+      <input type="text" id={lastName.id} name={lastName.name} value={lastName.value} />
       {lastName.error ? <div>{lastName.error}</div> : null}
     </div>
     <button>Submit</button>
@@ -95,24 +85,24 @@ It is also recommended to `memo`-ize your components to reduce re-rendering.
 
 `useZodForm` returns the following:
 
-| name         | description                                                                        |
-| ------------ | ---------------------------------------------------------------------------------- |
-| getField     | get the props for a given form field                                               |
-| getForm      | get the props for the form                                                         |
-| touched      | `true/false` - has given field been touched by user (ex: touched.firstName===true) |
-| dirty        | `true/false` - has given field been modified by user (ex: dirty.firstName===true)  |
+| name         | description                                                                                           |
+| ------------ | ----------------------------------------------------------------------------------------------------- |
+| getField     | get the props for a given form field                                                                  |
+| getForm      | get the props for the form                                                                            |
+| touched      | `true/false` - has given field been touched by user (ex: touched.firstName===true)                    |
+| dirty        | `true/false` - has given field been modified by user (ex: dirty.firstName===true)                     |
 | isValid      | `true/false` - given field (or form if no name passed) is currently valid (ex: isValid('firstName') ) |
-| handleChange | `onChange` handler for a form field (_onChange is not used by default_)             |
+| handleChange | `onChange` handler for a form field (_onChange is not used by default_)                               |
 
 <br/>
 
 The `getForm` method returns the following:
 
-| name            | description                              |
-| --------------- | ---------------------------------------- |
-| onFocus         | focus handler for all form fields        |
-| onBlur          | blur handler for all form fields         |
-| onSubmit        | submit handler for the form              |
+| name     | description                       |
+| -------- | --------------------------------- |
+| onFocus  | focus handler for all form fields |
+| onBlur   | blur handler for all form fields  |
+| onSubmit | submit handler for the form       |
 
 <br/>
 
@@ -138,8 +128,9 @@ You can now override the form mode (_uncontrolled/controlled_) set in the option
 
 ## Examples
 
-- [useZodForm - No Component Libary](https://codesandbox.io/s/testing-usezodform-hook-8ky97s?file=/src/App.tsx)
+- [useZodForm - No Component Library](https://codesandbox.io/s/testing-usezodform-hook-8ky97s?file=/src/App.tsx)
 - [useZodForm- MUI](https://codesandbox.io/s/usezodform-with-mui-87gu0o?file=/src/App.tsx)
+- [useZodForm- Semantic UI](https://codesandbox.io/s/usezodform-with-semantic-ui-pn5hjy?file=/src/App.tsx)
 
 <br/>
 
