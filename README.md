@@ -1,6 +1,6 @@
 # useZodForm
 
-A simple React hook to manage your form state. Similar to react-hook-form or formik. See below for example implementations.
+A React hook to manage your form state. Similar to react-hook-form or formik.
 
 ## Installation
 
@@ -8,15 +8,15 @@ Use one of the following commands to install:
 
 ```bash
 npm install usezodform
-//or
+// or
 pnpm add usezodform
-//or
+// or
 yarn add usezodform
 ```
 
 ## Usage
 
-First, create a zod schema and a form submit handler.
+First, create a [zod](https://zod.dev) schema and a form `onSubmit` handler. This handler will receive the form data as an argument.
 
 ```tsx
 import { z } from 'zod'
@@ -30,6 +30,8 @@ type FormSchema = z.infer<typeof schema>
 
 const onSubmit = (data: FormSchema) => console.log(data)
 ```
+
+**Note:** The zod `describe` function is used as the input's ` label` for the form field and `default` will be used as the initial value for the field.
 
 Next, import `usezodform` and set up the form:
 
@@ -63,7 +65,7 @@ When using a custom React component, the code can be simplified by spreading the
 <MyCustomInput {...getField('firstName')} />
 ```
 
-It is also recommended to `memo`-ize your components to reduce re-rendering.
+**Note:** It is also recommended to `memo`-ize your components to reduce re-rendering.
 
 <br/>
 
@@ -92,7 +94,7 @@ It is also recommended to `memo`-ize your components to reduce re-rendering.
 | touched      | `true/false` - has given field been touched by user (ex: touched.firstName===true)                    |
 | dirty        | `true/false` - has given field been modified by user (ex: dirty.firstName===true)                     |
 | isValid      | `true/false` - given field (or form if no name passed) is currently valid (ex: isValid('firstName') ) |
-| handleChange | `onChange` handler for a form field (_onChange is not used by default_)                               |
+| handleChange | An `onChange` handler for a form field (_onChange is not used by default_)                            |
 
 <br/>
 
