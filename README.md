@@ -21,13 +21,15 @@ First, create a [zod](https://zod.dev) schema and a form `onSubmit` handler. Thi
 ```tsx
 import { z } from 'zod'
 
-const schema = z.object({
+const formSchema = z.object({
   firstName: z.string().min(1, 'Too short').describe('First Name').default(''),
   lastName: z.string().min(1, 'Too short').describe('Last Name').default(''),
 })
 
-type FormSchema = z.infer<typeof schema>
+// get the type from the formSchema
+type FormSchema = z.infer<typeof formSchema>
 
+// handle the form submit. recieves the validated data
 const onSubmit = (data: FormSchema) => console.log(data)
 ```
 
@@ -37,7 +39,13 @@ Next, import `usezodform` and set up the form:
 
 ```tsx
 import { useZodForm } from 'usezodform'
-const { getField, getForm } = useZodForm<FormSchema>({ schema, onSubmit })
+
+// Pass the schema and onSubmit handler to useZodForm
+const { getField, getForm } = useZodForm<FormSchema>({
+  schema: formSchema,
+  onSubmit,
+  { mode: "uncontrolled" }, // this is the default value and does not need to be added.
+})
 
 const firstName = getField('firstName')
 const lastName = getField('lastName')
@@ -73,11 +81,11 @@ When using a custom React component, the code can be simplified by spreading the
 
 `useZodForm` accepts the following properties:
 
-| name     | description                                 |
-| -------- | ------------------------------------------- |
-| schema   | any valid `zod` schema                      |
-| onSubmit | callback function to handle form data       |
-| options  | `mode`: uncontrolled (default) / controlled |
+| name     | description                                   |
+| -------- | --------------------------------------------- |
+| schema   | any valid `zod` schema                        |
+| onSubmit | callback function to handle form data         |
+| options  | `mode`: uncontrolled (_default_) / controlled |
 
 <br/>
 
@@ -87,14 +95,14 @@ When using a custom React component, the code can be simplified by spreading the
 
 `useZodForm` returns the following:
 
-| name         | description                                                                                           |
-| ------------ | ----------------------------------------------------------------------------------------------------- |
-| getField     | get the props for a given form field                                                                  |
-| getForm      | get the props for the form                                                                            |
-| touched      | `true/false` - has given field been touched by user (ex: touched.firstName===true)                    |
-| dirty        | `true/false` - has given field been modified by user (ex: dirty.firstName===true)                     |
-| isValid      | `true/false` - given field (or form if no name passed) is currently valid (ex: isValid('firstName') ) |
-| handleChange | An `onChange` handler for a form field (_onChange is not used by default_)                            |
+| name         | description                                                                                             |
+| ------------ | ------------------------------------------------------------------------------------------------------- |
+| getField     | get the props for a given form field                                                                    |
+| getForm      | get the props for the form                                                                              |
+| touched      | has given field been touched by user (ex: touched.firstName===true)                                     |
+| dirty        | has given field been modified by user (ex: dirty.firstName===true)                                      |
+| isValid      | `true/false` - given field (_or form if no name passed_) is currently valid (ex: isValid('firstName') ) |
+| handleChange | An `onChange` handler for a form field (_onChange is not used by default_)                              |
 
 <br/>
 
