@@ -26,43 +26,66 @@ const formSchema = z.object({
   lastName: z.string().min(1, 'Too short').describe('Last Name').default(''),
 })
 
-// get the type from the formSchema
-type FormSchema = z.infer<typeof formSchema>
-
 // handle the form submit. recieves the validated data
 const onSubmit = (data: FormSchema) => console.log(data)
 ```
 
-**Note:** The zod `describe` function is used as the input's ` label` for the form field and `default` will be used as the initial value for the field.
+**Note:** The zod `describe` function is used as the input's `label` for the form field and `default` will be used as the initial value for the field.
 
 Next, import `usezodform` and set up the form:
 
 ```tsx
 import { useZodForm } from 'usezodform'
 
-// Pass the schema and onSubmit handler to useZodForm
-const { getField, getForm } = useZodForm<FormSchema>({
-  schema: formSchema,
-  onSubmit,
-  { mode: "uncontrolled" }, // this is the default value and does not need to be added.
-})
+/*
+Pass the required "schema" and "onSubmit" form handler to useZodForm. **Note**: "uncontrolled" is the default mode for useZodForm and is not required
 
-const firstName = getField('firstName')
-const lastName = getField('lastName')
+We recommend destructuring the results of useZodForm; it's not done here for brevity
+*/
+
+const zf = useZodForm(formSchema, onSubmit, /* "uncontrolled" */) 
+
+const firstName = zf.getField('firstName')
+const lastName = zf.getField('lastName')
 
 return (
-  <form {...getForm()}>
-    <div>
-      <label htmlFor={firstName.name}>{firstName.label}</label>
-      <input type="text" id={firstName.id} name={firstName.name} value={firstName.value} />
-      {firstName.error ? <div>{firstName.error}</div> : null}
+  <form {...zf.getForm()}>
+
+    <div className="formfield">
+      <label htmlFor={firstName.id}>{firstName.label}</label>
+      <input type="text" 
+        id={firstName.id} name={firstName.name} 
+        value={firstName.value}
+        aria-describedby={`${firstName.id}-description`}
+        aria-invalid={firstName.error ? 'true' : 'false'} 
+        aria-errormessage={
+          firstName.error ? `${firstName.id}-description` : undefined
+        }
+      />
+      <output aria-live="polite" id={`${firstName.id}-description`} className={firstName.error ? 'error' : ''}>
+        {firstName.error ? firstName.error : "Enter your first name"}
+      </output>
     </div>
-    <div>
-      <label htmlFor={lastName.name}>{lastName.label}</label>
-      <input type="text" id={lastName.id} name={lastName.name} value={lastName.value} />
-      {lastName.error ? <div>{lastName.error}</div> : null}
+
+    <div className="formfield">
+      <label htmlFor={lastName.id}>{lastName.label}</label>
+      <input type="text" 
+        id={lastName.id} name={lastName.name} 
+        value={lastName.value}
+        aria-describedby={`${lastName.id}-description`} 
+        aria-invalid={lastName.error ? 'true' : 'false'}
+        aria-errormessage={
+          lastName.error ? `${lastName.id}-description` : undefined
+        }
+      />
+      <output aria-live="polite" id={`${lastName.id}-description`} className={lastName.error ? 'error' : ''}>
+        {lastName.error ? lastName.error : "Enter your last name"}
+      </output>
     </div>
-    <button>Submit</button>
+
+    <button aria-disabled={zf.isSubmitting()}>
+    {zf.isSubmitting() ? 'Submitting...' : 'Submit'}</button>
+    
   </form>
 )
 ```
@@ -73,19 +96,15 @@ When using a custom React component, the code can be simplified by spreading the
 <MyCustomInput {...getField('firstName')} />
 ```
 
-**Note:** It is also recommended to `memo`-ize your components to reduce re-rendering.
-
-<br/>
-
 ## Props
 
-`useZodForm` accepts the following properties:
+`useZodForm` accepts the following parameters:
 
 | name     | description                                   |
 | -------- | --------------------------------------------- |
 | schema   | any valid `zod` schema                        |
 | onSubmit | callback function to handle form data         |
-| options  | `mode`: uncontrolled (_default_) / controlled |
+| mode?     |  uncontrolled (_default_) / controlled        |
 
 <br/>
 
@@ -102,6 +121,7 @@ When using a custom React component, the code can be simplified by spreading the
 | touched      | has given field been touched by user (ex: touched.firstName===true)                                     |
 | dirty        | has given field been modified by user (ex: dirty.firstName===true)                                      |
 | isValid      | `true/false` - given field (_or form if no name passed_) is currently valid (ex: isValid('firstName') ) |
+| isSubmitting | `true/false` - is the form currently being submitted                                                    |
 | handleChange | An `onChange` handler for a form field (_onChange is not used by default_)                              |
 
 <br/>
@@ -122,17 +142,23 @@ The `getField` method returns the following:
 | --------------- | ---------------------------------------- |
 | name            | name of the current field                |
 | id              | id of the current field (_same as name_) |
-| defaultValue \* | current value of the given field         |
+| value / defaultValue \* | current value of the given field         |
 | label           | current value of zod `describe`          |
 | error           | current error for the field              |
 
-\* If you are using `controlled` mode, then `defaultValue` will be returned as `value`.
+\* In `uncontrolled` mode, `defaultValue` will be returned. In `controlled` mode, `value` will be returned instead.
 
 <br/>
 
 ## Overriding the form mode
 
-You can now override the form mode (_uncontrolled/controlled_) set in the options by passing `mode` as an second parameter to the `getField` method. For example, `getField('firstName','controlled')` will return the properties of the `firstName` field as a controlled component.
+You can now override the default form `mode` by passing an optional `mode` to the `getField` method as a second parameter. For example,
+
+```tsx
+getField('firstName','controlled')
+```
+
+will return the properties of the `firstName` field as a _controlled_ component.
 
 <br/>
 

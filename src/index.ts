@@ -24,12 +24,6 @@ export type UseZodFormOptions = {
   mode?: UseZodFormMode
 }
 
-export type UseZodFormProps<T> = {
-  onSubmit: (data: T) => void
-  schema: z.AnyZodObject
-  options?: UseZodFormOptions
-}
-
 /**
  * Generates a new object with boolean properties based on the initial object.
  *
@@ -113,17 +107,22 @@ function getDefaults<T extends z.ZodTypeAny>(schema: z.AnyZodObject | z.ZodEffec
   )
 }
 
+function objectKeys<T extends object>(t: T): Array<keyof T> {
+  return Object.keys(t) as Array<keyof T>
+}
+
 let valid = false
+let submitting = false
 
-const defaultZodFormOptions = {
-  mode: 'uncontrolled',
-} as const
-
-export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOptions }: UseZodFormProps<T>) {
+export function useZodForm(
+  schema: z.AnyZodObject,
+  onSubmit: (data: z.infer<typeof schema>) => void,
+  mode: UseZodFormMode = 'uncontrolled',
+) {
   const initialValues = getDefaults(schema)
   const initialString = useMemo(() => stringObjectFromInitial({ ...initialValues } as any), [initialValues])
 
-  const values = useRef<T>({ ...initialValues })
+  const values = useRef<z.infer<typeof schema>>({ ...initialValues })
 
   const touched = useRef<BooleanObject>(booleanObjectFromInitial({ ...initialValues } as any))
   const dirty = useRef<BooleanObject>(booleanObjectFromInitial({ ...initialValues } as any))
@@ -131,22 +130,27 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
 
   const [errors, setErrors] = useState({ ...initialString })
 
-  const getValue = (key: keyof T) => values.current[key]
-  const getLabel = (key: keyof T) => schema.shape[key].description ?? ''
-  const getError = (key: keyof T) => getByValue(errors, key as string) ?? ''
+  const getValue = (key: keyof z.infer<typeof schema>) => values.current[key.toString()]
+  const getLabel = (key: keyof z.infer<typeof schema>) => schema.shape[key].description ?? ''
+  const getError = (key: keyof z.infer<typeof schema>) => getByValue(errors, key as string) ?? ''
+  const isSubmitting = () => submitting
 
-  const isValid = (key?: keyof T) => (key ? schema.shape[key].safeParse(values.current[key]) : valid)
+  const isValid = (key?: keyof z.infer<typeof schema>) =>
+    key ? schema.shape[key].safeParse(values.current[key.toString()]) : valid
 
   const handleSubmit = useCallback(
     (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault()
+      submitting = true
       const result = schema.safeParse(values.current)
       if (result.success) {
-        onSubmit(values.current)
+        onSubmit(result.data as z.infer<typeof schema>)
         touched.current = booleanObjectFromInitial({ ...initialValues } as any)
         dirty.current = booleanObjectFromInitial({ ...initialValues } as any)
         values.current = { ...initialValues }
         setErrors({ ...initialString })
+        submitting = false
+        valid = false
         e.currentTarget.reset()
       } else {
         if ('error' in result) {
@@ -158,6 +162,7 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
           }, {})
           setErrors({ ...issues })
           valid = false
+          submitting = false
         }
       }
     },
@@ -297,13 +302,16 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
    * @param {UseZodFormMode} mode - The mode of the form.
    * @return {UnControlledOrControlledField} - The field information.
    */
-  const getField = (key: keyof T, mode: UseZodFormMode = 'uncontrolled'): UnControlledOrControlledField => {
+  const getField = (
+    key: keyof z.infer<typeof schema>,
+    overrideMode: UseZodFormMode = 'uncontrolled',
+  ): UnControlledOrControlledField => {
     const name = String(key)
     const error = getError(key) ?? ''
     const val = (getValue(key) as string) ?? ''
     const label = getLabel(key) ?? ''
 
-    if (options.mode === 'uncontrolled' || mode !== 'controlled') {
+    if (mode === 'uncontrolled' || overrideMode !== 'controlled') {
       return {
         id: name,
         name,
@@ -328,5 +336,6 @@ export function useZodForm<T>({ onSubmit, schema, options = defaultZodFormOption
     touched: touched.current,
     dirty: dirty.current,
     isValid,
+    isSubmitting,
   }
 }
