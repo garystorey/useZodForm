@@ -1,4 +1,4 @@
-import { FormEvent, FocusEvent, useCallback, useState, useMemo, useRef, ChangeEvent } from 'react'
+import { FormEvent, FocusEvent, useCallback, useMemo, useRef, ChangeEvent } from 'react'
 
 import { z } from 'zod'
 
@@ -121,8 +121,6 @@ export function useZodForm(
   const dirty = useRef<BooleanObject>(booleanObjectFromInitial({ ...initialValues }))
   const previousValue = useRef<unknown>('')
 
-  // const [errors, setErrors] = useState({ ...initialString })
-
   const getValue = (key: keyof z.infer<typeof schema>) => values.current[key.toString()]
   const getLabel = (key: keyof z.infer<typeof schema>) => schema.shape[key].description ?? ''
   const getError = (key: keyof z.infer<typeof schema>) => getByValue(errors, key.toString()) ?? ''
@@ -205,7 +203,7 @@ export function useZodForm(
 
       errors.current = {
         ...errors.current,
-        [name]: '',
+        [name]: issues,
       }
     },
     [schema, values],
@@ -250,7 +248,6 @@ export function useZodForm(
 
       const result = schema.shape[name].safeParse(value)
       if (result.success) {
-        valid = schema.safeParse(values.current).success
         errors.current = {
           ...errors.current,
           [name]: '',
@@ -314,6 +311,29 @@ export function useZodForm(
     } as ControlledField
   }
 
+  const setField = (key: keyof z.infer<typeof schema>, value: unknown): boolean => {
+    if (!key) return false
+    const result = schema.shape[key].safeParse(value)
+    if (result.success) {
+      dirty.current = {
+        ...dirty.current,
+        [key]: true,
+      }
+
+      touched.current = {
+        ...touched.current,
+        [key]: true,
+      }
+
+      values.current = {
+        ...values.current,
+        [key]: value,
+      }
+      return true
+    }
+    return false
+  }
+
   return {
     handleChange,
     getField,
@@ -322,5 +342,6 @@ export function useZodForm(
     dirty: dirty.current,
     isValid,
     isSubmitting,
+    setField,
   }
 }
