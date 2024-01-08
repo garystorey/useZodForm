@@ -1,9 +1,7 @@
-import { FormEvent, FocusEvent, useCallback, useMemo, useRef, ChangeEvent } from 'react'
-
+import { FormEvent, FocusEvent, useCallback, useState, useMemo, useRef, ChangeEvent } from 'react'
 import { z } from 'zod'
 
 type FormField = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-
 type UseZodFormMode = 'controlled' | 'uncontrolled'
 
 export type UnControlledField = {
@@ -18,7 +16,7 @@ export type ControlledField = Omit<UnControlledField, 'defaultValue'> & {
   value: string
 }
 
-export type UnControlledOrControlledField = ControlledField | UnControlledField
+export type UseZodField = ControlledField | UnControlledField
 
 /**
  * Generates a new object with boolean properties based on the initial object.
@@ -56,7 +54,7 @@ function stringObjectFromInitial<T extends Record<string, unknown>>(object: T): 
   return obj
 }
 
-function getByValue(obj: { [x: string]: any }, key: string) {
+function getByValue(obj: { [x: string]: unknown }, key: string): string | unknown {
   if (!obj || typeof obj !== 'object') return ''
   if (key in obj) return obj[key]
   return ''
@@ -115,15 +113,16 @@ export function useZodForm(
   const initialString = useMemo(() => stringObjectFromInitial({ ...initialValues }), [initialValues])
 
   const values = useRef<z.infer<typeof schema>>({ ...initialValues })
-  const errors = useRef<z.infer<typeof schema>>({ ...initialString })
 
   const touched = useRef<BooleanObject>(booleanObjectFromInitial({ ...initialValues }))
   const dirty = useRef<BooleanObject>(booleanObjectFromInitial({ ...initialValues }))
   const previousValue = useRef<unknown>('')
 
+  const [errors, setErrors] = useState({ ...initialString })
+
   const getValue = (key: keyof z.infer<typeof schema>) => values.current[key.toString()]
   const getLabel = (key: keyof z.infer<typeof schema>) => schema.shape[key].description ?? ''
-  const getError = (key: keyof z.infer<typeof schema>) => getByValue(errors, key.toString()) ?? ''
+  const getError = (key: keyof z.infer<typeof schema>) => getByValue(errors, key as string) ?? ''
   const isSubmitting = () => submitting
 
   const isValid = (key?: keyof z.infer<typeof schema>) =>
@@ -136,12 +135,10 @@ export function useZodForm(
       const result = schema.safeParse(values.current)
       if (result.success) {
         onSubmit(result.data as z.infer<typeof schema>)
-        touched.current = booleanObjectFromInitial({ ...initialValues } as any)
-        dirty.current = booleanObjectFromInitial({ ...initialValues } as any)
+        touched.current = booleanObjectFromInitial({ ...initialValues })
+        dirty.current = booleanObjectFromInitial({ ...initialValues })
         values.current = { ...initialValues }
-        errors.current = {
-          ...initialString,
-        }
+        setErrors({ ...initialString })
         submitting = false
         valid = false
         e.currentTarget.reset()
@@ -153,7 +150,7 @@ export function useZodForm(
               [i.path.join('-')]: i.message,
             }
           }, {})
-          errors.current = { ...issues }
+          setErrors({ ...issues })
           valid = false
           submitting = false
         }
@@ -190,10 +187,12 @@ export function useZodForm(
       }
 
       if (result.success) {
-        errors.current = {
-          ...errors.current,
-          [name]: '',
-        }
+        setErrors((prevErrors: Record<string, string>) => {
+          return {
+            ...prevErrors,
+            [name]: '',
+          }
+        })
         return
       }
 
@@ -201,10 +200,12 @@ export function useZodForm(
         return (acc += i.message)
       }, '')
 
-      errors.current = {
-        ...errors.current,
-        [name]: issues,
-      }
+      setErrors((prevErrors: Record<string, string>) => {
+        return {
+          ...prevErrors,
+          [name]: issues,
+        }
+      })
     },
     [schema, values],
   )
@@ -212,10 +213,10 @@ export function useZodForm(
   const handleFocus = useCallback((e: FocusEvent<HTMLFormElement>) => {
     const { name = '', value = '' } = e.target
     if (name) {
-      errors.current = {
-        ...errors.current,
+      setErrors((prevErrors: Record<string, string>) => ({
+        ...prevErrors,
         [e.target.name]: '',
-      }
+      }))
       touched.current[name] = true
       previousValue.current = value
     }
@@ -248,10 +249,13 @@ export function useZodForm(
 
       const result = schema.shape[name].safeParse(value)
       if (result.success) {
-        errors.current = {
-          ...errors.current,
-          [name]: '',
-        }
+        valid = schema.safeParse(values.current).success
+        setErrors((prevErrors: Record<string, string>) => {
+          return {
+            ...prevErrors,
+            [name]: '',
+          }
+        })
         return
       }
 
@@ -261,10 +265,12 @@ export function useZodForm(
         return (acc += i.message)
       }, '')
 
-      errors.current = {
-        ...errors.current,
-        [name]: issues,
-      }
+      setErrors((prevErrors: Record<string, string>) => {
+        return {
+          ...prevErrors,
+          [name]: issues,
+        }
+      })
     },
     [schema, values],
   )
@@ -284,10 +290,7 @@ export function useZodForm(
    * @param {UseZodFormMode} mode - The mode of the form.
    * @return {UnControlledOrControlledField} - The field information.
    */
-  const getField = (
-    key: keyof z.infer<typeof schema>,
-    overrideMode: UseZodFormMode = 'uncontrolled',
-  ): UnControlledOrControlledField => {
+  const getField = (key: keyof z.infer<typeof schema>, overrideMode: UseZodFormMode = 'uncontrolled'): UseZodField => {
     const name = String(key)
     const error = getError(key) ?? ''
     const val = (getValue(key) as string) ?? ''
@@ -311,37 +314,32 @@ export function useZodForm(
     } as ControlledField
   }
 
-  const setField = (key: keyof z.infer<typeof schema>, value: unknown): boolean => {
-    if (!key) return false
-    const result = schema.shape[key].safeParse(value)
-    if (result.success) {
-      dirty.current = {
-        ...dirty.current,
-        [key]: true,
-      }
-
-      touched.current = {
-        ...touched.current,
-        [key]: true,
-      }
-
+  const setField = (name: keyof z.infer<typeof schema>, value: unknown) => {
+    if (!name) return
+    if (name in values.current) {
       values.current = {
         ...values.current,
-        [key]: value,
+        [name]: value,
       }
-      return true
+      touched.current = {
+        ...touched.current,
+        [name]: true,
+      }
+      dirty.current = {
+        ...dirty.current,
+        [name]: true,
+      }
     }
-    return false
   }
 
   return {
     handleChange,
+    setField,
     getField,
     getForm,
     touched: touched.current,
     dirty: dirty.current,
     isValid,
     isSubmitting,
-    setField,
   }
 }
