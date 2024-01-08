@@ -56,7 +56,7 @@ function stringObjectFromInitial<T extends Record<string, unknown>>(object: T): 
   return obj
 }
 
-function getByValue(obj: { [x: string]: unknown }, key: string): string | unknown {
+function getByValue(obj: { [x: string]: any }, key: string) {
   if (!obj || typeof obj !== 'object') return ''
   if (key in obj) return obj[key]
   return ''
@@ -112,19 +112,20 @@ export function useZodForm(
   mode: UseZodFormMode = 'uncontrolled',
 ) {
   const initialValues = getDefaults(schema)
-  const initialString = useMemo(() => stringObjectFromInitial({ ...initialValues } as any), [initialValues])
+  const initialString = useMemo(() => stringObjectFromInitial({ ...initialValues }), [initialValues])
 
   const values = useRef<z.infer<typeof schema>>({ ...initialValues })
+  const errors = useRef<z.infer<typeof schema>>({ ...initialString })
 
-  const touched = useRef<BooleanObject>(booleanObjectFromInitial({ ...initialValues } as any))
-  const dirty = useRef<BooleanObject>(booleanObjectFromInitial({ ...initialValues } as any))
+  const touched = useRef<BooleanObject>(booleanObjectFromInitial({ ...initialValues }))
+  const dirty = useRef<BooleanObject>(booleanObjectFromInitial({ ...initialValues }))
   const previousValue = useRef<unknown>('')
 
-  const [errors, setErrors] = useState({ ...initialString })
+  // const [errors, setErrors] = useState({ ...initialString })
 
   const getValue = (key: keyof z.infer<typeof schema>) => values.current[key.toString()]
   const getLabel = (key: keyof z.infer<typeof schema>) => schema.shape[key].description ?? ''
-  const getError = (key: keyof z.infer<typeof schema>) => getByValue(errors, key as string) ?? ''
+  const getError = (key: keyof z.infer<typeof schema>) => getByValue(errors, key.toString()) ?? ''
   const isSubmitting = () => submitting
 
   const isValid = (key?: keyof z.infer<typeof schema>) =>
@@ -140,7 +141,9 @@ export function useZodForm(
         touched.current = booleanObjectFromInitial({ ...initialValues } as any)
         dirty.current = booleanObjectFromInitial({ ...initialValues } as any)
         values.current = { ...initialValues }
-        setErrors({ ...initialString })
+        errors.current = {
+          ...initialString,
+        }
         submitting = false
         valid = false
         e.currentTarget.reset()
@@ -152,7 +155,7 @@ export function useZodForm(
               [i.path.join('-')]: i.message,
             }
           }, {})
-          setErrors({ ...issues })
+          errors.current = { ...issues }
           valid = false
           submitting = false
         }
@@ -189,12 +192,10 @@ export function useZodForm(
       }
 
       if (result.success) {
-        setErrors((prevErrors: Record<string, string>) => {
-          return {
-            ...prevErrors,
-            [name]: '',
-          }
-        })
+        errors.current = {
+          ...errors.current,
+          [name]: '',
+        }
         return
       }
 
@@ -202,12 +203,10 @@ export function useZodForm(
         return (acc += i.message)
       }, '')
 
-      setErrors((prevErrors: Record<string, string>) => {
-        return {
-          ...prevErrors,
-          [name]: issues,
-        }
-      })
+      errors.current = {
+        ...errors.current,
+        [name]: '',
+      }
     },
     [schema, values],
   )
@@ -215,10 +214,10 @@ export function useZodForm(
   const handleFocus = useCallback((e: FocusEvent<HTMLFormElement>) => {
     const { name = '', value = '' } = e.target
     if (name) {
-      setErrors((prevErrors: Record<string, string>) => ({
-        ...prevErrors,
+      errors.current = {
+        ...errors.current,
         [e.target.name]: '',
-      }))
+      }
       touched.current[name] = true
       previousValue.current = value
     }
@@ -252,12 +251,10 @@ export function useZodForm(
       const result = schema.shape[name].safeParse(value)
       if (result.success) {
         valid = schema.safeParse(values.current).success
-        setErrors((prevErrors: Record<string, string>) => {
-          return {
-            ...prevErrors,
-            [name]: '',
-          }
-        })
+        errors.current = {
+          ...errors.current,
+          [name]: '',
+        }
         return
       }
 
@@ -267,12 +264,10 @@ export function useZodForm(
         return (acc += i.message)
       }, '')
 
-      setErrors((prevErrors: Record<string, string>) => {
-        return {
-          ...prevErrors,
-          [name]: issues,
-        }
-      })
+      errors.current = {
+        ...errors.current,
+        [name]: issues,
+      }
     },
     [schema, values],
   )
