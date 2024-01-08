@@ -20,10 +20,6 @@ export type ControlledField = Omit<UnControlledField, 'defaultValue'> & {
 
 export type UnControlledOrControlledField = ControlledField | UnControlledField
 
-export type UseZodFormOptions = {
-  mode?: UseZodFormMode
-}
-
 /**
  * Generates a new object with boolean properties based on the initial object.
  *
@@ -46,10 +42,10 @@ type BooleanObject = ReturnType<typeof booleanObjectFromInitial>
 /**
  * Generates a string object from an initial object.
  *
- * @param {T extends Record<string, any>} object - The initial object.
+ * @param {T extends Record<string, unknown>} object - The initial object.
  * @return {Record<string, string>} The generated string object.
  */
-function stringObjectFromInitial<T extends Record<string, any>>(object: T): Record<string, string> {
+function stringObjectFromInitial<T extends Record<string, unknown>>(object: T): Record<string, string> {
   let obj = {}
   for (const [key] of Object.entries({ ...object })) {
     obj = {
@@ -60,7 +56,7 @@ function stringObjectFromInitial<T extends Record<string, any>>(object: T): Reco
   return obj
 }
 
-function getByValue(obj: { [x: string]: any }, key: string): string {
+function getByValue(obj: { [x: string]: unknown }, key: string): string | unknown {
   if (!obj || typeof obj !== 'object') return ''
   if (key in obj) return obj[key]
   return ''
@@ -105,10 +101,6 @@ function getDefaults<T extends z.ZodTypeAny>(schema: z.AnyZodObject | z.ZodEffec
       return [key, getDefaultValue(value as z.ZodTypeAny) ?? '']
     }),
   )
-}
-
-function objectKeys<T extends object>(t: T): Array<keyof T> {
-  return Object.keys(t) as Array<keyof T>
 }
 
 let valid = false
@@ -244,11 +236,9 @@ export function useZodForm(
 
       if (e.target.tagName === 'INPUT') {
         if (e.target.type === 'checkbox') {
-          console.log('input:checkbox')
           value = !!e.target.checked
         }
         if (e.target.type === 'number') {
-          console.log('input:number')
           value = Number(value)
         }
       }

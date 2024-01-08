@@ -21,16 +21,16 @@
   "author": "Gary Storey <garystoreydev@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "@types/react": "^18.2.21",
-    "@types/react-dom": "^18.2.7",
+    "@types/react": "^18.2.47",
+    "@types/react-dom": "^18.2.18",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "tsup": "^7.2.0",
-    "typescript": "^5.2.2",
-    "zod": "^3.22.2"
+    "tsup": "^7.3.0",
+    "typescript": "^5.3.3",
+    "zod": "^3.22.4"
   },
   "peerDependencies": {
     "react": "^18.2.0",
-    "zod": "^3.22.2"
+    "zod": "^3.22.4"
   }
 }
