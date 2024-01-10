@@ -1,6 +1,6 @@
 # useZodForm
 
-A React hook to manage your form state similar to react-hook-form or formik.
+A React hook to manage your form state using [zod](https://zod.dev).
 
 ## Installation
 
@@ -27,6 +27,9 @@ const formSchema = z.object({
 })
 
 // handle the form submit. recieves the validated data
+// You can use the SubmitHandler type from 'usezodform' if you prefer
+// const onSubmit: SubmitHandler<FormSchema> = (data) => console.log(data)
+
 const onSubmit = (data: FormSchema) => console.log(data)
 ```
 
@@ -38,18 +41,19 @@ Next, import `usezodform` and set up the form:
 import { useZodForm } from 'usezodform'
 
 /*
-Pass the required "schema" and "onSubmit" form handler to useZodForm. **Note**: "uncontrolled" is the default mode for useZodForm and is not required
-
-We recommend destructuring the results of useZodForm; it's not done here for brevity
+Pass the required "schema" and "onSubmit" form handler to useZodForm. **Note**: "uncontrolled" is the default mode for useZodForm and is not required.
 */
 
-const zf = useZodForm(formSchema, onSubmit, /* "uncontrolled" */) 
+const zodform= useZodForm(formSchema, onSubmit, /* "uncontrolled" */ ) 
+/* destructure here for easy readability */
+const { getForm, getField, isSubmitting } = zodform
 
-const firstName = zf.getField('firstName')
-const lastName = zf.getField('lastName')
+/* grab the field data */
+const firstName = getField('firstName')
+const lastName = getField('lastName')
 
 return (
-  <form {...zf.getForm()}>
+  <form {...getForm()}>
 
     <div className="formfield">
       <label htmlFor={firstName.id}>{firstName.label}</label>
@@ -84,7 +88,7 @@ return (
     </div>
 
     <button aria-disabled={zf.isSubmitting()}>
-    {zf.isSubmitting() ? 'Submitting...' : 'Submit'}</button>
+    {isSubmitting() ? 'Submitting...' : 'Submit'}</button>
     
   </form>
 )
@@ -104,7 +108,7 @@ When using a custom React component, the code can be simplified by spreading the
 | -------- | --------------------------------------------- |
 | schema   | any valid `zod` schema                        |
 | onSubmit | callback function to handle form data         |
-| mode?     |  uncontrolled (_default_) / controlled        |
+| mode?    |  uncontrolled (_default_) / controlled        |
 
 <br/>
 
@@ -117,6 +121,7 @@ When using a custom React component, the code can be simplified by spreading the
 | name         | description                                                                                             |
 | ------------ | ------------------------------------------------------------------------------------------------------- |
 | getField     | get the props for a given form field                                                                    |
+| setField     | set the value of a given form field                                                                     |
 | getForm      | get the props for the form                                                                              |
 | touched      | has given field been touched by user (ex: touched.firstName===true)                                     |
 | dirty        | has given field been modified by user (ex: dirty.firstName===true)                                      |
