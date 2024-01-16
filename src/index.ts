@@ -281,17 +281,20 @@ export function useZodForm<SchemaType>(
 
   const setField = (name: keyof SchemaType, value: unknown) => {
     if (!name) return
-    values.current = {
-      ...values.current,
-      [name]: value,
-    }
-    touched.current = {
-      ...touched.current,
-      [name]: true,
-    }
-    dirty.current = {
-      ...dirty.current,
-      [name]: true,
+    const result = schema.shape[name].safeParse(value)
+    if (result.success) {
+      values.current = {
+        ...values.current,
+        [name]: value,
+      }
+      touched.current = {
+        ...touched.current,
+        [name]: true,
+      }
+      dirty.current = {
+        ...dirty.current,
+        [name]: true,
+      }
     }
   }
 
