@@ -1,7 +1,7 @@
 {
   "name": "usezodform",
-  "version": "0.4.1",
-  "description": "A React hook for managing your form via zod",
+  "version": "0.5.0",
+  "description": "A React hook for managing form state using zod with no additional dependencies",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -21,16 +21,16 @@
   "author": "Gary Storey <garystoreydev@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "@types/react": "^18.2.21",
-    "@types/react-dom": "^18.2.7",
+    "@types/react": "^18.2.47",
+    "@types/react-dom": "^18.2.18",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "tsup": "^7.2.0",
-    "typescript": "^5.2.2",
-    "zod": "^3.22.2"
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3",
+    "zod": "^3.22.4"
   },
   "peerDependencies": {
     "react": "^18.2.0",
-    "zod": "^3.22.2"
+    "zod": "^3.22.4"
   }
 }
