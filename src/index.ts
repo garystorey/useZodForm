@@ -299,7 +299,8 @@ export function useZodForm<SchemaType>(
       }
 
       return true
-    } else {
+    }
+    if ('error' in result) {
       const issues = result.error.errors.reduce((acc: string, i: z.ZodIssue) => {
         return (acc += i.message)
       }, '')
@@ -310,9 +311,9 @@ export function useZodForm<SchemaType>(
           [name]: issues,
         }
       })
-
-      return false
     }
+
+    return false
   }
 
   return {
