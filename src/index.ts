@@ -281,11 +281,13 @@ export function useZodForm<SchemaType>(
 
   const setField = (name: keyof SchemaType, value: unknown) => {
     if (!name) return
+
     const result = schema.shape[name].safeParse(value)
+
     if (result.success) {
       values.current = {
         ...values.current,
-        [name]: value,
+        [name]: result.value,
       }
       touched.current = {
         ...touched.current,
@@ -295,6 +297,21 @@ export function useZodForm<SchemaType>(
         ...dirty.current,
         [name]: true,
       }
+
+      return true
+    } else {
+      const issues = result.error.errors.reduce((acc: string, i: z.ZodIssue) => {
+        return (acc += i.message)
+      }, '')
+
+      setErrors((prevErrors: Record<string, string>) => {
+        return {
+          ...prevErrors,
+          [name]: issues,
+        }
+      })
+
+      return false
     }
   }
 
