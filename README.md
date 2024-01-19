@@ -89,7 +89,7 @@ return (
       </output>
     </div>
 
-    <button aria-disabled={zf.isSubmitting()}>
+    <button aria-disabled={isSubmitting()}>
     {isSubmitting() ? 'Submitting...' : 'Submit'}</button>
     
   </form>
