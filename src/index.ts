@@ -87,7 +87,15 @@ export function useZodForm<SchemaType>(
     return values.current[key as keyof SchemaType]
   }
   const getLabel = (key: string) => schema.shape[key].description ?? ''
-  const getError = (key: string) => getByValue(errors, key as string) ?? ''
+  const getError = (key: string | undefined) => {
+    if (!key) return errors
+    return getByValue(errors, key) ?? errors
+  }
+
+  const setError = (key: keyof SchemaType, value: string) => {
+    setErrors((prevErrors) => ({ ...prevErrors, [key]: value }))
+  }
+
   const isSubmitting = () => submitting
 
   const isValid = (key?: keyof z.infer<typeof schema>) =>
@@ -321,9 +329,13 @@ export function useZodForm<SchemaType>(
     setField,
     getField,
     getForm,
+    getError,
+    setError,
     touched: touched.current,
     dirty: dirty.current,
     isValid,
     isSubmitting,
   }
 }
+
+export type UseZodFormResult = ReturnType<typeof useZodForm>
