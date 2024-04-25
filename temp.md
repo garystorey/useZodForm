@@ -45,16 +45,16 @@ import { SubmitHandler } from "usezodform";
 
 type FormSchema = z.infer<typeof schema>;
 
-const onSubmit: SubmitHandler<FormSchema> = (data) => console.log(data);
+const onSubmit: SubmitHandler<FormSchema> = (data) => console.log(typeof data); // FormSchema
 ```
 
-Next, call the `useZodForm` hook. The hook takes two required parameters: the zod schema and the form submit handler. The third parameter, `mode`, is optional and can be set to "controlled" or "uncontrolled". The default mode is "uncontrolled".
+Next, call the `useZodForm` hook. The hook takes two required parameters: the zod schema and the form submit handler. The third parameter, `mode`, is **optional**. It can be set to "controlled" or "uncontrolled". The default mode is "uncontrolled".
 
 ```tsx
 const zodform = useZodForm(schema, onSubmit)
 ```
 
-Now you can use the `getForm`, `getField` and `isSubmitting` functions to access the form state. **Note**: For more information about all the available methods, view the [API](/#api) documentation. This is a simplified example; To create a more accessible form, see the [Creating custom components](#creating-custom-components) section for additional information.
+Now you can use the `getForm`, `getField` and `isSubmitting` functions to access the form state. This is a simplified example; To create a more accessible form, see the [Creating custom components](#creating-custom-components) section for additional information. **Note**: For more information about all the available methods, view the [API](/#api) documentation.
 
 ```tsx
 const { getForm, getField, isSubmitting } = zodform
@@ -83,7 +83,7 @@ return (
       </p>
     </div>
 
-    <button type="submit" disabled={submitting} aria-disabled={submitting}>
+    <button type="submit" disabled={submitting}>
         {submitting ? "Submitting..." : "Submit"}
     </button>
 
@@ -91,40 +91,43 @@ return (
 )
 ```
 
-That's it! Your form should now be validated against your schema and your submit handler will be called once the form is submitted and all fields are valid.
+That's it! The form will be validated against your schema and the submit handler will be called once all fields are valid.
 
 ## Documentation
 
 In this section, you will find all the available methods and types for the `useZodForm` hook.
+
+The `useZodForm` hook returns the following:
+
+| Method | Description |
+| --- | --- |
+| `getForm` | Returns the form event handlers |
+| `getField` | Returns the given field data |
+| `isSubmitting` | Returns boolean if the form is submitting |
+| `isValid` | Returns boolean if the form or given field is valid |
+| `setError` | Sets the error message for the field |
+| `getError` | Returns the error message for the field or empty string |
+| `handleChange` | Handles changes for controlled form fields |
+| `setField` | Sets the field value |
+| `touched` | Object based on SchemaType if the field has been touched ex: `touched.firstName // false` |
+| `dirty` | Object based on SchemaType if the field has been changed ex: `dirty.firstName // true` |
+
+In most situations, the `getField` and `getForm` methods will be sufficient.
+
+However, if you need more granular control over the form state, you can use the additional methods like `setField` and `setError`. This can be useful when dealing with interdependent fields.
+
+**Note**: `handleChange` is **not used by default** and is only required when using the `controlled` mode. Add `onChange={handleChange}` to your form element to handle changes for controlled form fields.
 
 ### API
 
 ### Types
 
 ```ts
-type UseZodFormMode = 'controlled' | 'uncontrolled'
-
-type UnControlledField = {
-  id: string
-  name: string
-  defaultValue: string
-  label: string
-  error: string
-}
-
-type ControlledField = Omit<UnControlledField, 'defaultValue'> & {
-  value: string
-}
-
-type UseZodField = ControlledField | UnControlledField
-
-type SubmitHandler<SchemaType> = (data: SchemaType) : void
-
-type UseZodFormFormEventHandlers = {
-  onSubmit: (event: FormEvent<HTMLFormElement>): void,
-  onFocus: (event: FocusEvent<HTMLFormElement>): void,
-  onBlur: (event: FocusEvent<HTMLFormElement>): void,
-}
+declare function useZodForm<SchemaType>(
+  schema: z.AnyZodObject,
+  onSubmit: SubmitHandler<SchemaType>,
+  mode?: UseZodFormMode
+): UseZodFormReturn<SchemaType>
 
 type UseZodFormReturn<SchemaType> = {
   getForm: (): UseZodFormFormEventHandlers
@@ -138,6 +141,33 @@ type UseZodFormReturn<SchemaType> = {
   touched: Record<keyof SchemaType, boolean>
   dirty: Record<keyof SchemaType, boolean>
 }
+
+type UseZodFormMode = 'controlled' | 'uncontrolled'
+type FormField = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+
+type SubmitHandler<SchemaType> = (data: SchemaType) : void
+
+type UseZodFormFormEventHandlers = {
+  onSubmit: (event: FormEvent<HTMLFormElement>): void,
+  onFocus: (event: FocusEvent<HTMLFormElement>): void,
+  onBlur: (event: FocusEvent<HTMLFormElement>): void,
+}
+
+type UseZodField = ControlledField | UnControlledField
+
+type UnControlledField = {
+  id: string
+  name: string
+  defaultValue: string
+  label: string
+  error: string
+}
+
+type ControlledField = Omit<UnControlledField, 'defaultValue'> & {
+  value: string
+}
+
+
 ```
 
 ### Using Third Party Components
