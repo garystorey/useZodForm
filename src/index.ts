@@ -1,68 +1,6 @@
 import { FormEvent, FocusEvent, useCallback, useState, useMemo, useRef, ChangeEvent } from 'react'
 import { z } from 'zod'
 
-type FormField = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-type UseZodFormMode = 'controlled' | 'uncontrolled'
-
-export type SubmitHandler<SchemaType> = (data: SchemaType) => void
-
-export type UnControlledField = {
-  id: string
-  name: string
-  defaultValue: string
-  label: string
-  error: string
-}
-
-export type ControlledField = Omit<UnControlledField, 'defaultValue'> & {
-  value: string
-}
-
-export type UseZodField = ControlledField | UnControlledField
-
-function objectToBoolean(object: Record<string, unknown>): Record<string, boolean> {
-  return Object.keys({ ...object }).reduce((acc, key) => ({ ...acc, [key]: false }), {})
-}
-
-function objectToString(object: Record<string, unknown>): Record<string, string> {
-  return Object.keys({ ...object }).reduce((acc, key) => ({ ...acc, [key]: '' }), {})
-}
-
-function getByValue(obj: Record<string, unknown>, key: string): string | unknown {
-  if (!obj || typeof obj !== 'object') return ''
-  if (key in obj) return obj[key]
-  return ''
-}
-
-function getDefaults<T extends z.ZodTypeAny>(schema: z.AnyZodObject | z.ZodEffects<any>): z.infer<T> {
-  // Check if it's a ZodEffect
-  if (schema instanceof z.ZodEffects) {
-    // Check if it's a recursive ZodEffect
-    if (schema.innerType() instanceof z.ZodEffects) return getDefaults(schema.innerType())
-    // return schema inner shape as a fresh zodObject
-    return getDefaults(z.ZodObject.create(schema.innerType().shape))
-  }
-
-  function getDefaultValue(schema: z.ZodTypeAny): unknown {
-    if (schema instanceof z.ZodDefault) return schema._def.defaultValue()
-    // return an empty array if it is
-    if (schema instanceof z.ZodArray) return []
-    // return an empty string if it is
-    if (schema instanceof z.ZodString) return ''
-    // return an content of object recursivly
-    if (schema instanceof z.ZodObject) return getDefaults(schema)
-
-    if (!('innerType' in schema._def)) return undefined
-    return getDefaultValue(schema._def.innerType)
-  }
-
-  return Object.fromEntries(
-    Object.entries(schema.shape).map(([key, value]) => {
-      return [key, getDefaultValue(value as z.ZodTypeAny) ?? '']
-    }),
-  )
-}
-
 let valid = false
 let submitting = false
 
@@ -76,20 +14,20 @@ export function useZodForm<SchemaType>(
 
   const values = useRef<SchemaType>({ ...initialValues })
 
-  const touched = useRef(objectToBoolean({ ...initialValues }))
-  const dirty = useRef(objectToBoolean({ ...initialValues }))
+  const touched = useRef<ReturnType<typeof objectToBoolean>>(objectToBoolean({ ...initialValues }))
+  const dirty = useRef<ReturnType<typeof objectToBoolean>>(objectToBoolean({ ...initialValues }))
   const previousValue = useRef<unknown>('')
 
   const [errors, setErrors] = useState({ ...initialString })
 
-  const getValue = (key: string) => {
+  const getValue = (key: keyof SchemaType) => {
     if (!key) return
-    return values.current[key as keyof SchemaType]
+    return values.current[key]
   }
-  const getLabel = (key: string) => schema.shape[key].description ?? ''
-  const getError = (key: string | undefined) => {
+  const getLabel = (key: keyof SchemaType) => schema.shape[key].description ?? ''
+  const getError = (key: keyof SchemaType) => {
     if (!key) return errors
-    return getByValue(errors, key) ?? errors
+    return getByValue(errors, key as string) ?? errors
   }
 
   const setError = (key: keyof SchemaType, value: string) => {
@@ -98,8 +36,7 @@ export function useZodForm<SchemaType>(
 
   const isSubmitting = () => submitting
 
-  const isValid = (key?: keyof z.infer<typeof schema>) =>
-    key ? schema.shape[key].safeParse(values.current[key as keyof SchemaType]) : valid
+  const isValid = (key?: keyof SchemaType) => (key ? schema.shape[key].safeParse(values.current[key]) : valid)
 
   const handleSubmit = useCallback(
     (e: FormEvent<HTMLFormElement>) => {
@@ -133,7 +70,7 @@ export function useZodForm<SchemaType>(
   )
 
   const handleChange = useCallback(
-    (e: ChangeEvent<FormField>) => {
+    (e: ChangeEvent<HTMLFormElement>) => {
       const el = e.target
       const name = el.name || ''
       if (!name) return
@@ -142,7 +79,7 @@ export function useZodForm<SchemaType>(
 
       if (el.tagName === 'INPUT') {
         if (el.type === 'checkbox') {
-          const el = e.target as HTMLInputElement
+          const el = e.target
           value = el.checked
         }
         if (el.type === 'number') {
@@ -249,6 +186,13 @@ export function useZodForm<SchemaType>(
   )
 
   const getForm = () => {
+    if (mode === 'controlled')
+      return {
+        onSubmit: handleSubmit,
+        onFocus: handleFocus,
+        onBlur: handleBlur,
+        onChange: handleChange,
+      }
     return {
       onSubmit: handleSubmit,
       onFocus: handleFocus,
@@ -256,22 +200,14 @@ export function useZodForm<SchemaType>(
     }
   }
 
-  /**
-   * Retrieves a field's information based on the given key.
-   *
-   * @param {keyof T} key - The key of the field.
-   * @param {UseZodFormMode} mode - The mode of the form.
-   * @return {UnControlledOrControlledField} - The field information.
-   */
   const getField = (key: keyof SchemaType, overrideMode: UseZodFormMode = 'uncontrolled'): UseZodField => {
     const name = String(key)
-    const error = getError(name) ?? ''
-    const val = getValue(name) ?? ''
-    const label = getLabel(name) ?? ''
+    const error = getError(key) ?? ''
+    const val = getValue(key) ?? ''
+    const label = getLabel(key) ?? ''
 
     if (mode === 'uncontrolled' || overrideMode !== 'controlled') {
       return {
-        id: name,
         name,
         defaultValue: val,
         label,
@@ -279,7 +215,6 @@ export function useZodForm<SchemaType>(
       } as UnControlledField
     }
     return {
-      id: name,
       name,
       value: val,
       label,
@@ -324,18 +259,91 @@ export function useZodForm<SchemaType>(
     return false
   }
 
+  const isTouched = (name: keyof SchemaType) => {
+    if (name in touched.current) {
+      return touched.current[name as string]
+    }
+  }
+  const isDirty = (name: keyof SchemaType) => {
+    if (name in dirty.current) {
+      return dirty.current[name as string]
+    }
+  }
+
   return {
-    handleChange,
-    setField,
     getField,
     getForm,
     getError,
+    setField,
     setError,
-    touched: touched.current,
-    dirty: dirty.current,
+    isDirty,
+    isTouched,
     isValid,
     isSubmitting,
   }
 }
 
 export type UseZodFormResult = ReturnType<typeof useZodForm>
+
+// UTILS
+function objectToBoolean(object: Record<string, unknown>): Record<string, boolean> {
+  return Object.keys({ ...object }).reduce((acc, key) => ({ ...acc, [key]: false }), {})
+}
+
+function objectToString(object: Record<string, unknown>): Record<string, string> {
+  return Object.keys({ ...object }).reduce((acc, key) => ({ ...acc, [key]: '' }), {})
+}
+
+function getByValue(obj: Record<string, unknown>, key: string): string | unknown {
+  if (!obj || typeof obj !== 'object') return ''
+  if (key in obj) return obj[key]
+  return ''
+}
+
+function getDefaults<T extends z.ZodTypeAny>(schema: z.AnyZodObject | z.ZodEffects<any>): z.infer<T> {
+  // Check if it's a ZodEffect
+  if (schema instanceof z.ZodEffects) {
+    // Check if it's a recursive ZodEffect
+    if (schema.innerType() instanceof z.ZodEffects) return getDefaults(schema.innerType())
+    // return schema inner shape as a fresh zodObject
+    return getDefaults(z.ZodObject.create(schema.innerType().shape))
+  }
+
+  function getDefaultValue(schema: z.ZodTypeAny): unknown {
+    if (schema instanceof z.ZodDefault) return schema._def.defaultValue()
+    // return an empty array if it is
+    if (schema instanceof z.ZodArray) return []
+    // return an empty string if it is
+    if (schema instanceof z.ZodString) return ''
+    // return an content of object recursivly
+    if (schema instanceof z.ZodObject) return getDefaults(schema)
+
+    if (!('innerType' in schema._def)) return undefined
+    return getDefaultValue(schema._def.innerType)
+  }
+
+  return Object.fromEntries(
+    Object.entries(schema.shape).map(([key, value]) => {
+      return [key, getDefaultValue(value as z.ZodTypeAny) ?? '']
+    }),
+  )
+}
+
+// TYPES
+
+type UseZodFormMode = 'controlled' | 'uncontrolled'
+
+export type SubmitHandler<SchemaType> = (data: SchemaType) => void
+
+export type UnControlledField = {
+  name: string
+  defaultValue: string
+  label: string
+  error: string
+}
+
+export type ControlledField = Omit<UnControlledField, 'defaultValue'> & {
+  value: string
+}
+
+export type UseZodField = ControlledField | UnControlledField
