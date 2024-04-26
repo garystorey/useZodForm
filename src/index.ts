@@ -20,23 +20,23 @@ export function useZodForm<SchemaType>(
 
   const [errors, setErrors] = useState({ ...initialString })
 
-  const getValue = (key: keyof SchemaType) => {
-    if (!key) return
-    return values.current[key]
+  const getValue = (name: keyof SchemaType) => {
+    if (!name) return
+    return values.current[name]
   }
-  const getLabel = (key: keyof SchemaType) => schema.shape[key].description ?? ''
-  const getError = (key: keyof SchemaType) => {
-    if (!key) return errors
-    return getByValue(errors, key as string) ?? errors
+  const getLabel = (name: keyof SchemaType) => schema.shape[name].description ?? ''
+  const getError = (name: keyof SchemaType) => {
+    if (!name) return errors
+    return getByValue(errors, name as string) ?? errors
   }
 
-  const setError = (key: keyof SchemaType, value: string) => {
-    setErrors((prevErrors) => ({ ...prevErrors, [key]: value }))
+  const setError = (name: keyof SchemaType, value: string) => {
+    setErrors((prevErrors) => ({ ...prevErrors, [name]: value }))
   }
 
   const isSubmitting = () => submitting
 
-  const isValid = (key?: keyof SchemaType) => (key ? schema.shape[key].safeParse(values.current[key]) : valid)
+  const isValid = (name?: keyof SchemaType) => (name ? schema.shape[name].safeParse(values.current[name]) : valid)
 
   const handleSubmit = useCallback(
     (e: FormEvent<HTMLFormElement>) => {
@@ -200,23 +200,22 @@ export function useZodForm<SchemaType>(
     }
   }
 
-  const getField = (key: keyof SchemaType, overrideMode: UseZodFormMode = 'uncontrolled'): UseZodField => {
-    const name = String(key)
-    const error = getError(key) ?? ''
-    const val = getValue(key) ?? ''
-    const label = getLabel(key) ?? ''
+  const getField = (name: keyof SchemaType, overrideMode: UseZodFormMode = 'uncontrolled'): UseZodField => {
+    const error = getError(name) ?? ''
+    const value = getValue(name) ?? ''
+    const label = getLabel(name) ?? ''
 
     if (mode === 'uncontrolled' || overrideMode !== 'controlled') {
       return {
         name,
-        defaultValue: val,
+        defaultValue: value,
         label,
         error,
       } as UnControlledField
     }
     return {
       name,
-      value: val,
+      value,
       label,
       error,
     } as ControlledField
