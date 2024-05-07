@@ -1,192 +1,324 @@
 # useZodForm
 
-A React hook written in TypeScript to manage form state using [zod](https://zod.dev) with no additional dependencies.
-It provides functions and state variables for handling form validation, submission and field management based on the provided Zod schema.
+<div style="max-width:80ch">
+
+[![License](https://img.shields.io/badge/license-MIT-%230172ad)](https://github.com/garystorey/usezodform/blob/master/LICENSE.md)
+![NPM Version](https://img.shields.io/npm/v/usezodform)
+
+A React hook that provides a simple way to manage form state by handling form validation, submission and field management, using a [zod](https://zod.dev) schema.
+
+## Table of contents
+
+- [Installation](#installation)
+- [Quick start](#quick-start)
+- [Documentation](#documentation)
+- [Upgrade Guide](#upgrade-guide)
+- [License](#license)
 
 ## Installation
 
-Use one of the following commands to install:
+To install `useZodForm`, use your preferred package manager, such as `npm`, `pnpm`, `bun` or `yarn`. The example below uses `npm`.
 
 ```bash
 npm install usezodform
-// or
-pnpm add usezodform
-// or
-yarn add usezodform
 ```
 
-## Usage
+## Quick start
 
-To use `useZodForm`, you need a zod schema and a form submission handler.
+Follow the steps below to get started with `useZodForm`.
 
-`useZodForm` takes advantage of zod's `default` and `describe` functions. When defining your schema, you can use zod's `describe` function to add a label to your form field and the `default` function to set an initial value for the form field. This means you only have to update information about your form fields in one location.
+### Define your schema
 
-```tsx
-import { z } from 'zod'
+The first step is to create a zod schema for your form. In this example, we use a schema that has two fields: `firstName` and `lastName`. Both fields are required and must be at least one character long.
 
-const formSchema = z.object({
-  firstName: z.string().min(1, 'Too short').describe('First Name').default(''),
-  lastName: z.string().min(1, 'Too short').describe('Last Name').default(''),
+```ts
+const schema = z.object({
+  firstName: z.string().min(1, "Too short"),
+  lastName: z.string().min(1, "Too short"),
 })
-
 ```
 
-The submit handler will receive validated form data as its argument.
-When creating your form handler, you can optionally use the useZodForm `SubmitHandler<T>` type.
-It accepts a generic type that should match your form schema.
+To make managing the form fields easier, `useZodForm` will make use of zod's `describe` function to add a label to the field. This makes it easier to internationalize the form, as all strings are localized to the schema.
+
+Similarly, zod's `default` function can be used to set an initial value for the field. Because of this, `useZodform` does not require an initial values object to be created.
 
 ```tsx
-type FormSchema = z.infer<typeof formSchema>
+import {z} from 'zod'
 
-//const onSubmit: SubmitHandler<FormSchema> = (data) => console.log(data)
+const string = z.string().min(1, "Too short")
 
-const onSubmit = (data: FormSchema) => console.log(data)
-
+const nameSchema = z.object({
+    firstName: string.describe("First Name").default(""),
+    // i18n label for last name
+    lastName: string.describe(i18n("labels.lastName")).default(""),
+});
 ```
 
-Next, import `usezodform`. The hook takes two required paramaters and one optional parameter.
-The first parameter is the zod `schema` and the second parameter is the `onSubmit` handler.
-The `mode` parameter is optional and defaults to "uncontrolled".
+### Create submit handler
 
-**Note**: "uncontrolled" is the default mode for useZodForm and is not required.  
+Next, create a form submit handler. In the example below, the form handler takes a generic type that should match your zod schema. You can also use the `SubmitHandler` to create your form handler. See the [types](/#types) section for more information.  
 
 ```tsx
-import { useZodForm } from 'usezodform'
+import { SubmitHandler } from "usezodform"
 
-const zodform = useZodForm(formSchema, onSubmit, /* "uncontrolled" */ ) 
+type FormSchema = z.infer<typeof schema>
 
+const onSubmit: SubmitHandler<FormSchema> = (data) => {
+  console.log(data)
+}
 ```
 
-```tsx
-const { getForm, getField, isSubmitting } = zodform
+### Initialize the hook
 
-/* grab the field data */
+Import the hook from the `usezodform` package.
+
+The hook takes two required parameters: the zod schema and the form submit handler.
+
+The third parameter, `mode`, is **optional**. It can be set to "**controlled**" or "**uncontrolled**" (*the default is "uncontrolled"*). To understand which is the best for your situation,
+refer to the [difference between controlled and uncontrolled form fields](https://claritydev.net/blog/react-controlled-vs-uncontrolled-components).
+
+```tsx
+import { useZodForm } from "usezodform"
+const zodform = useZodForm<FormSchema>(schema, onSubmit)
+```
+
+### Setup the form
+
+To setup the form, use the `getForm` and `getField` functions.
+The `getForm` will set the form event handlers and `getField` returns the given field data. In the example below, `isSubmitting` is used to check if the form is currently submitting.
+
+```tsx
+const { getForm, getField, isSubmitting } = useZodForm(schema, onSubmit)
+
 const firstName = getField('firstName')
 const lastName = getField('lastName')
 
 return (
   <form {...getForm()}>
 
-    <div className="formfield">
-      <label htmlFor={firstName.id}>{firstName.label}</label>
+    <div>
+      <label htmlFor={firstName.name}>{firstName.label}</label>
       <input type="text" 
-        id={firstName.id} name={firstName.name} 
-        value={firstName.value}
-        aria-describedby={`${firstName.id}-description`}
-        aria-invalid={firstName.error ? 'true' : 'false'} 
-        aria-errormessage={
-          firstName.error ? `${firstName.id}-description` : undefined
-        }
+        id={firstName.name} name={firstName.name} 
+        defaultvalue={firstName.value} 
       />
-      <output aria-live="polite" id={`${firstName.id}-description`} className={firstName.error ? 'error' : ''}>
-        {firstName.error ? firstName.error : "Enter your first name"}
-      </output>
+      <p>
+      {firstName.error ? firstName.error : "Enter you first name"}
+      </p>
     </div>
 
-    <div className="formfield">
-      <label htmlFor={lastName.id}>{lastName.label}</label>
+    <div>
+      <label htmlFor={lastName.name}>{lastName.label}</label>
       <input type="text" 
-        id={lastName.id} name={lastName.name} 
-        value={lastName.value}
-        aria-describedby={`${lastName.id}-description`} 
-        aria-invalid={lastName.error ? 'true' : 'false'}
-        aria-errormessage={
-          lastName.error ? `${lastName.id}-description` : undefined
-        }
+        id={lastName.name} name={lastName.name} 
+        defaultValue={lastName.value} 
       />
-      <output aria-live="polite" id={`${lastName.id}-description`} className={lastName.error ? 'error' : ''}>
-        {lastName.error ? lastName.error : "Enter your last name"}
-      </output>
+      <p>
+      {lastName.error ? lastName.error : "Enter you last name"}
+      </p>
     </div>
 
-    <button aria-disabled={isSubmitting()}>
-    {isSubmitting() ? 'Submitting...' : 'Submit'}</button>
-    
+    <button type="submit">
+    {isSubmitting() ? "Submitting..." : "Submit"}
+    </button>
+
   </form>
 )
 ```
 
-When using a custom React component, the code can be simplified by spreading the results of the `getField` call onto your component:
+That's it!
 
-```tsx
-<MyCustomInput {...getField('firstName')} />
-```
+The form will be validated against your schema and the submit handler will be called when all fields are valid.
 
-## Props
+### More Information
 
-`useZodForm` accepts the following parameters:
+To view all of the available methods, check out the [documentation](#documentation) below. For more complete examples, see the [using third party component libraries](#using-third-party-components) or the [creating custom components](#creating-custom-components) sections.
 
-| name     | description                                   |
-| -------- | --------------------------------------------- |
-| schema   | any valid `zod` schema                        |
-| onSubmit | callback function to handle form data         |
-| mode?    |  `uncontrolled` (_default_) / `controlled`        |
+## Documentation
 
-<br/>
+In this section, you will find all the available methods and types for the `useZodForm` hook.
 
-`useZodForm` returns the following:
+The `useZodForm` hook returns the following methods. See the [UseZodFormReturn](#types) type for more information.
 
-| name         | description                                                                                             |
-| ------------ | ------------------------------------------------------------------------------------------------------- |
-| getField     | get the props for a given form field                                                                    |
-| setField     | set the value of a given form field                                                                     |
-| getForm      | get the props for the form                                                                              |
-| touched      | has given field been touched by user (ex: touched.firstName===true)                                     |
-| dirty        | has given field been modified by user (ex: `dirty.firstName===true`)                                      |
-| isValid      | `true/false` - given field (_or form if no name passed_) is currently valid (ex: `isValid('firstName')` ) |
-| isSubmitting | `true/false` - is the form currently being submitted                                                    |
-| handleChange | An `onChange` handler for a form field (_onChange is not used by default_)                              |
-| errors | List of errors on the current form                                |
+| Method | Description |
+| --- | --- |
+| `getForm` | Returns the form event handlers |
+| `getField` | Returns the given field data |
+| `getError` | Returns the error message for the field or empty string |
+| `setField` | Sets the field value |
+| `setError` | Sets the error message for the field |
+| `isValid` | Returns boolean if the form or field is valid |
+| `isSubmitting` | Returns boolean if the form is submitting |
+| `isTouched` | Returns boolean if the field has been touched |
+| `isDirty` |  Returns boolean if the field has been changed ex:|
 
 <br/>
 
-The `getForm` method returns the following:
+In most situations, the `getField` and `getForm` methods will be sufficient.
 
-| name     | description                       |
-| -------- | --------------------------------- |
-| onFocus  | focus handler for all form fields |
-| onBlur   | blur handler for all form fields  |
-| onSubmit | submit handler for the form       |
+However, if you need more granular control over the form state, you can use the additional methods like `setField` and `setError`. This can be useful when dealing with interdependent fields.
 
-<br/>
+### getForm
 
-The `getField` method returns the following:
+The `getForm` method returns the following events.
+ See the [UseZodFormFormEventHandlers](#types) type for more information.
 
-| name            | description                              |
-| --------------- | ---------------------------------------- |
-| name            | name of the current field                |
-| id              | id of the current field (_same as name_) |
-| defaultValue / value \* | current value of the given field         |
-| label           | current value of zod `describe`          |
-| error           | current error for the field              |
-
-\* In `uncontrolled` mode, `defaultValue` will be returned. In `controlled` mode, `value` will be returned instead.
+| name     | Type | Description                |
+| -------- | ---------------------|--------------------------- |
+| `onFocus`  | (event: FocusEvent\<HTMLFormElement\>): void | focus handler for all form fields |
+| `onBlur`   | (event: FocusEvent\<HTMLFormElement\>): void | blur handler for all form fields  |
+| `onSubmit` | (event: FormEvent\<HTMLFormElement\>): void | calls the `onSubmit` handler when valid       |
+| `onChange`?&nbsp;* | (event: ChangeEvent\<HTMLFormElement\>): void | change handler for all controlled form fields |
 
 <br/>
 
-## Overriding the form mode
+**Note**: In `controlled` mode, an `onChange` handler is returned. In `uncontrolled` mode, no handler is returned.
 
-You can now override the default form `mode` by passing an optional `mode` to the `getField` method as a second parameter. For example,
+### getField
 
-```tsx
-getField('firstName','controlled')
-```
+The `getField` method returns the following data. See the [UseZodField](#types) type for more information.
 
-will return the properties of the `firstName` field as a _controlled_ component.
+| name         | Type   | description                              |
+| -----------|---- | ---------------------------------------- |
+| `name`    |string       | name of the current field                |
+| `defaultValue` / `value` \* | unknown | current value of the given field         |
+| `label`     | string      | current value of zod `describe`          |
+| `error`     | string      | current error for the field              |
 
 <br/>
 
-## Examples
+**Note**: In `controlled` mode, `value` will be returned. In `uncontrolled` mode, `defaultValue` will be returned instead.
+
+### Using Third Party Components
+
+Check out these online code sandbox examples using third party form components with useZodForm.
 
 - [useZodForm - No Component Library](https://codesandbox.io/s/testing-usezodform-hook-8ky97s?file=/src/App.tsx)
-- [useZodForm- MUI](https://codesandbox.io/s/usezodform-with-mui-87gu0o?file=/src/App.tsx)
-- [useZodForm- Semantic UI](https://codesandbox.io/s/usezodform-with-semantic-ui-pn5hjy?file=/src/App.tsx)
+- [useZodForm - MUI](https://codesandbox.io/s/usezodform-with-mui-87gu0o?file=/src/App.tsx)
+- [useZodForm - Semantic UI](https://codesandbox.io/s/usezodform-with-semantic-ui-pn5hjy?file=/src/App.tsx)
 
-<br/>
+Your favorite library not listed? Please [open an issue](https://github.com/garystorey/usezodform/issues/new) if you would like to add it.
 
-## To Do
+### Creating Custom Components
 
-- <del>Finalize API for v1.0.</del> - Unless I find an issue this is it.
-- <del>Continue to optimize performance</del> - only changes to errors cause a re-render.
-- <del>Add examples for additional component libraries</del>
-- Create documentation website
+In most instances, it is recommended to create custom components for your form fields. These can be wrappers around existing component libaries or your own custom components.
+
+In the code example above, we can take the code for a single form field and extract that into its own component and pass the results of the `getField` method to it.
+
+```tsx
+// Field.tsx
+
+export type FieldProps = UseZodField & {
+  description?: string
+  // any other custom props
+}
+
+export function Field(props: FieldProps) {
+  const {name, label, error, description="", ...rest} = props
+  return (
+    <div className="formfield">
+      <label htmlFor={name}>{label}</label>
+      <input type="text" id={name} {...rest} />
+      <p>
+      {error ? error : description}
+      </p>
+    </div>
+  )
+}
+
+// Form.tsx
+
+<Field {...getField('firstName')} description="Enter your first name" />
+```
+
+**Please Note:** This is ***not an accessible component***. This is just an example of how to create a custom component.
+
+### Types
+
+The following types are exported from the `useZodForm` hook.
+
+```ts
+type UseZodFormMode = 'controlled' | 'uncontrolled'
+
+type UnControlledField = {
+  name: string
+  defaultValue: string
+  label: string
+  error: string
+}
+
+type ControlledField = Omit<UnControlledField, 'defaultValue'> & {
+  value: string
+}
+
+type UseZodField = ControlledField | UnControlledField
+
+type SubmitHandler<SchemaType> = (data: SchemaType) : void
+
+declare function useZodForm<SchemaType>(
+  schema: z.AnyZodObject,
+  onSubmit: SubmitHandler<SchemaType>,
+  mode?: UseZodFormMode
+): UseZodFormReturn<SchemaType>
+
+type UseZodFormReturn<SchemaType> = {
+  getForm: (): UseZodFormFormEventHandlers
+  getField: (name: keyof SchemaType): UseZodField
+  getError: (name: keyof SchemaType): string
+  setField: (name: keyof SchemaType, value: unknown): void
+  setError: (name: keyof SchemaType, error: string): void
+  isValid: (name?: keyof SchemaType): boolean
+  isTouched: (name: keyof SchemaType): boolean
+  isDirty: (name: keyof SchemaType): boolean
+  isSubmitting: (): boolean
+}
+
+type UseZodFormFormEventHandlers = {
+  onSubmit: (event: FormEvent<HTMLFormElement>): void,
+  onFocus: (event: FocusEvent<HTMLFormElement>): void,
+  onBlur: (event: FocusEvent<HTMLFormElement>): void,
+  onChange?: (event: ChangeEvent<HTMLFormElement>): void,
+}
+```
+
+## Upgrade Guide
+
+If you are updating from an older version of `useZodForm` you will need to update your code to use the new methods as there are breaking changes from the beta release.
+
+### Breaking changes from v0.5.3
+
+1 - `id` has been removed from the `getField` method. This was a duplicate of the `name` property. Simply replace any `id` property with `name`.
+
+2 - The `dirty`, `error` and `touched` objects have been removed. They have been replaced with the `isDirty`, `getError` and `isTouched` methods respectively.
+
+The example below shows how to update your code to use the new methods.
+
+```ts
+// old
+if(dirty.firstName) {
+  // ...
+}
+
+// new 
+if(isDirty('firstName')) {
+  // ...
+}
+
+if (error.lastName !== "") {
+  // ...
+}
+if (getError('lastName') !== "") {
+  // ...
+}
+
+```
+
+### Breaking changes from previous versions
+
+Honestly, I dont remember. Just add the new methods. 🫠
+
+## License
+
+Licensed under the [MIT License](https://github.com/garystorey/usezodform/blob/master/LICENSE.md).
+
+</div>
