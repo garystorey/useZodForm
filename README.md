@@ -238,47 +238,41 @@ export function Field(props: FieldProps) {
 The following types are exported from the `useZodForm` hook.
 
 ```ts
-type UseZodFormMode = 'controlled' | 'uncontrolled'
+type UseZodFormMode = 'controlled' | 'uncontrolled';
+
+type SubmitHandler<SchemaType> = (data: SchemaType) => void;
 
 type UnControlledField = {
-  name: string
-  defaultValue: string
-  label: string
-  error: string
-}
+    name: string;
+    defaultValue: string;
+    label: string;
+    error: string;
+};
 
 type ControlledField = Omit<UnControlledField, 'defaultValue'> & {
-  value: string
-}
+    value: string;
+};
 
-type UseZodField = ControlledField | UnControlledField
-
-type SubmitHandler<SchemaType> = (data: SchemaType) : void
-
-declare function useZodForm<SchemaType>(
-  schema: z.AnyZodObject,
-  onSubmit: SubmitHandler<SchemaType>,
-  mode?: UseZodFormMode
-): UseZodFormReturn<SchemaType>
-
-type UseZodFormReturn<SchemaType> = {
-  getForm: (): UseZodFormFormEventHandlers
-  getField: (name: keyof SchemaType): UseZodField
-  getError: (name: keyof SchemaType): string
-  setField: (name: keyof SchemaType, value: unknown): void
-  setError: (name: keyof SchemaType, error: string): void
-  isValid: (name?: keyof SchemaType): boolean
-  isTouched: (name: keyof SchemaType): boolean
-  isDirty: (name: keyof SchemaType): boolean
-  isSubmitting: (): boolean
-}
+type UseZodField = ControlledField | UnControlledField;
 
 type UseZodFormFormEventHandlers = {
-  onSubmit: (event: FormEvent<HTMLFormElement>): void,
-  onFocus: (event: FocusEvent<HTMLFormElement>): void,
-  onBlur: (event: FocusEvent<HTMLFormElement>): void,
-  onChange?: (event: ChangeEvent<HTMLFormElement>): void,
-}
+    onSubmit: (e: FormEvent<HTMLFormElement>) => void;
+    onFocus: (e: FocusEvent<HTMLFormElement>) => void;
+    onBlur: (e: FocusEvent<HTMLFormElement>) => void;
+    onChange?: (e: ChangeEvent<HTMLFormElement>) => void;
+};
+
+type UseZodFormResult<T> = {
+    getField: (name: keyof T, overrideMode?: UseZodFormMode) => UseZodField;
+    getForm: () => UseZodFormFormEventHandlers;
+    getError: (name: keyof T) => {};
+    setField: (name: keyof T, value: unknown) => boolean | undefined;
+    setError: (name: keyof T, value: string) => void;
+    isDirty: (name: keyof T) => boolean | undefined;
+    isTouched: (name: keyof T) => boolean | undefined;
+    isValid: (name?: keyof T) => any;
+    isSubmitting: () => boolean;
+};
 ```
 
 ## Upgrade Guide

@@ -8,7 +8,7 @@ export function useZodForm<SchemaType>(
   schema: z.AnyZodObject,
   onSubmit: SubmitHandler<SchemaType>,
   mode: UseZodFormMode = 'uncontrolled',
-) {
+): UseZodFormResult<SchemaType> {
   const initialValues = getDefaults(schema)
   const initialString = useMemo(() => objectToString({ ...initialValues }), [initialValues])
 
@@ -21,10 +21,10 @@ export function useZodForm<SchemaType>(
   const [errors, setErrors] = useState({ ...initialString })
 
   const getValue = (name: keyof SchemaType) => {
-    if (!name) return
+    if (!name) return ''
     return values.current[name]
   }
-  const getLabel = (name: keyof SchemaType) => schema.shape[name].description ?? ''
+  const getLabel = (name: keyof SchemaType): string => schema.shape[name].description ?? ''
   const getError = (name: keyof SchemaType) => {
     if (!name) return errors
     return getByValue(errors, name as string) ?? errors
@@ -34,9 +34,10 @@ export function useZodForm<SchemaType>(
     setErrors((prevErrors) => ({ ...prevErrors, [name]: value }))
   }
 
-  const isSubmitting = () => submitting
+  const isSubmitting = (): boolean => submitting
 
-  const isValid = (name?: keyof SchemaType) => (name ? schema.shape[name].safeParse(values.current[name]) : valid)
+  const isValid = (name?: keyof SchemaType): boolean =>
+    name ? schema.shape[name].safeParse(values.current[name]).success : valid
 
   const handleSubmit = useCallback(
     (e: FormEvent<HTMLFormElement>) => {
@@ -185,7 +186,7 @@ export function useZodForm<SchemaType>(
     [schema, values],
   )
 
-  const getForm = () => {
+  const getForm = (): UseZodFormFormEventHandlers => {
     if (mode === 'controlled')
       return {
         onSubmit: handleSubmit,
@@ -221,8 +222,8 @@ export function useZodForm<SchemaType>(
     } as ControlledField
   }
 
-  const setField = (name: keyof SchemaType, value: unknown) => {
-    if (!name) return
+  const setField = (name: keyof SchemaType, value: unknown): boolean => {
+    if (!name) return false
 
     const result = schema.shape[name].safeParse(value)
 
@@ -239,7 +240,6 @@ export function useZodForm<SchemaType>(
         ...dirty.current,
         [name]: true,
       }
-
       return true
     }
     if ('error' in result) {
@@ -254,19 +254,20 @@ export function useZodForm<SchemaType>(
         }
       })
     }
-
     return false
   }
 
-  const isTouched = (name: keyof SchemaType) => {
+  const isTouched = (name: keyof SchemaType): boolean => {
     if (name in touched.current) {
-      return touched.current[name as string]
+      return Boolean(touched.current[name as string])
     }
+    return false
   }
-  const isDirty = (name: keyof SchemaType) => {
+  const isDirty = (name: keyof SchemaType): boolean => {
     if (name in dirty.current) {
-      return dirty.current[name as string]
+      return Boolean(dirty.current[name as string])
     }
+    return false
   }
 
   return {
@@ -281,8 +282,6 @@ export function useZodForm<SchemaType>(
     isSubmitting,
   }
 }
-
-export type UseZodFormResult = ReturnType<typeof useZodForm>
 
 // UTILS
 function objectToBoolean(object: Record<string, unknown>): Record<string, boolean> {
@@ -330,7 +329,7 @@ function getDefaults<T extends z.ZodTypeAny>(schema: z.AnyZodObject | z.ZodEffec
 
 // TYPES
 
-type UseZodFormMode = 'controlled' | 'uncontrolled'
+export type UseZodFormMode = 'controlled' | 'uncontrolled'
 
 export type SubmitHandler<SchemaType> = (data: SchemaType) => void
 
@@ -346,3 +345,22 @@ export type ControlledField = Omit<UnControlledField, 'defaultValue'> & {
 }
 
 export type UseZodField = ControlledField | UnControlledField
+
+export type UseZodFormFormEventHandlers = {
+  onSubmit: (e: FormEvent<HTMLFormElement>) => void
+  onFocus: (e: FocusEvent<HTMLFormElement>) => void
+  onBlur: (e: FocusEvent<HTMLFormElement>) => void
+  onChange?: (e: ChangeEvent<HTMLFormElement>) => void
+}
+
+export type UseZodFormResult<T> = {
+  getField: (name: keyof T, overrideMode?: UseZodFormMode) => UseZodField
+  getForm: () => UseZodFormFormEventHandlers
+  getError: (name: keyof T) => {}
+  setField: (name: keyof T, value: unknown) => boolean | undefined
+  setError: (name: keyof T, value: string) => void
+  isDirty: (name: keyof T) => boolean | undefined
+  isTouched: (name: keyof T) => boolean | undefined
+  isValid: (name?: keyof T) => any
+  isSubmitting: () => boolean
+}
