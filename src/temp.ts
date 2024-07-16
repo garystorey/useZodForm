@@ -74,11 +74,6 @@ export function useZodForm<SchemaType>(
   const setField = (name: keyof SchemaType, value: unknown): boolean => {
     if (!name) return false
 
-    values.current = {
-      ...values.current,
-      [name]: value,
-    }
-
     const result = schema.shape[name].safeParse(value)
 
     if (result.success) {
@@ -94,15 +89,8 @@ export function useZodForm<SchemaType>(
         ...dirty.current,
         [name]: true,
       }
-      setErrors((prevErrors: Record<string, string>) => {
-        return {
-          ...prevErrors,
-          [name]: '',
-        }
-      })
       return true
     }
-
     if ('error' in result) {
       const issues = result.error.errors.reduce((acc: string, i: z.ZodIssue) => {
         return (acc += i.message)

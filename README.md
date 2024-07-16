@@ -29,7 +29,7 @@ Follow the steps below to get started with `useZodForm`.
 
 ### Define your schema
 
-The first step is to create a zod schema for your form. In this example, we use a schema that has two fields: `firstName` and `lastName`. Both fields are required and must be at least one character long.
+The first step is to create a zod schema for the form. In this example, the schema that has two fields: `firstName` and `lastName`. Both fields are required and must be at least one character long.
 
 ```ts
 const schema = z.object({
@@ -40,7 +40,7 @@ const schema = z.object({
 
 To make managing the form fields easier, `useZodForm` will make use of zod's `describe` function to add a label to the field. This makes it easier to internationalize the form, as all strings are localized to the schema.
 
-Similarly, zod's `default` function can be used to set an initial value for the field. Because of this, `useZodform` does not require an initial values object to be created.
+Similarly, zod's `default` function can be used to set an initial value for the field. Because of this, `useZodform` does not require an "initial values" object to be created like a lot of other form libraries.
 
 ```tsx
 import {z} from 'zod'
@@ -56,7 +56,7 @@ const nameSchema = z.object({
 
 ### Create submit handler
 
-Next, create a form submit handler. In the example below, the form handler takes a generic type that should match your zod schema. You can also use the `SubmitHandler` to create your form handler. See the [types](/#types) section for more information.  
+Next, create a form submit handler. In the example below, the form handler takes a generic type that matches the zod schema. The `SubmitHandler` type is used to create the form handler. See the [types](/#types) section for more information.  
 
 ```tsx
 import { SubmitHandler } from "usezodform"
@@ -85,7 +85,7 @@ const zodform = useZodForm<FormSchema>(schema, onSubmit)
 ### Setup the form
 
 To setup the form, use the `getForm` and `getField` functions.
-The `getForm` will set the form event handlers and `getField` returns the given field data. In the example below, `isSubmitting` is used to check if the form is currently submitting.
+The `getForm` will set the form event handlers and `getField` returns the given field data. In the example below, `isSubmitting` is also used to check if the form is currently submitting.
 
 ```tsx
 const { getForm, getField, isSubmitting } = useZodForm(schema, onSubmit)
@@ -150,7 +150,7 @@ The `useZodForm` hook returns the following methods. See the [UseZodFormReturn](
 | `isValid` | Returns boolean if the form or field is valid |
 | `isSubmitting` | Returns boolean if the form is submitting |
 | `isTouched` | Returns boolean if the field has been touched |
-| `isDirty` |  Returns boolean if the field has been changed ex:|
+| `isDirty` |  Returns boolean if the field has been changed |
 
 <br/>
 
@@ -189,7 +189,65 @@ The `getField` method returns the following data. See the [UseZodField](#types) 
 
 **Note**: In `controlled` mode, `value` will be returned. In `uncontrolled` mode, `defaultValue` will be returned instead.
 
-### Using Third Party Components
+### getError
+
+The `getError` method returns a `string` representing the current error for the given field.
+
+```tsx
+// empty string or error message
+const firstNameError =  getError("firstName")
+```
+
+### setField
+
+The `setField` method will update the value in form state for the given field. Returns `true` if the field is valid, `false` otherwise. **Note**: This method should only be used when you need to update the value in form state directly. For example, if you need to update the value of one field based on the value of another.
+
+```tsx
+// returns true if valid, false otherwise
+const result = setField('firstName', 'John')
+```
+
+### setError
+
+The `setError` will update the error in form state for the given field. Similar to the `setField` method, this method should only be used if you need to set an error for a field based on the value of another.
+
+```tsx
+// returns true if valid, false otherwise
+const result = setError('firstName', 'Too short')
+```
+
+### isValid
+
+The `isValid` method will return a boolean indicating whether the given field or the entire form is valid.
+
+```tsx
+// returns true if valid, false otherwise
+const fieldResult = isValid('firstName')
+const formResult = isValid()
+```
+
+### isSubmitting
+
+The `isSubmitting` method will return a boolean indicating whether the form is currently submitting or not.
+
+```tsx
+<button>
+  {isSubmitting() ? "Submitting..." : "Submit"}
+</button>
+```
+
+### isDirty
+
+The `isDirty` method will return a boolean indicating whether the given field has been changed. **Note**: This does not work for the entire form; you must supply the name of the field.
+
+```tsx
+// returns true if valid, false otherwise
+const fieldResult = isDirty('firstName')
+```
+
+If you encounter any issues, please [open an issue](https://github.com/garystorey/usezodform/issues/new)
+
+## Using Third Party Components
 
 Check out these online code sandbox examples using third party form components with useZodForm.
 
