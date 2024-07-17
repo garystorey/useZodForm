@@ -366,7 +366,7 @@ if (getError('lastName') !== "") {
 
 ```
 
-### Breaking changes from previous versions
+### Breaking changes < v0.5.3
 
 Honestly, I dont remember. Just add the new methods. 🫠
 
