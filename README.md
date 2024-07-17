@@ -17,10 +17,10 @@ A React hook that provides a simple way to manage form state by handling form va
 
 ## Installation
 
-To install `useZodForm`, use your preferred package manager, such as `npm`, `pnpm`, `bun` or `yarn`. The example below uses `npm`.
+To install `useZodForm`, use your preferred package manager, such as `npm`, `pnpm`, `bun` or `yarn`. `zod` is also required. The example below uses `npm`.
 
 ```bash
-npm install usezodform
+npm install usezodform zod
 ```
 
 ## Quick start
@@ -40,17 +40,17 @@ const schema = z.object({
 
 To make managing the form fields easier, `useZodForm` will make use of zod's `describe` function to add a label to the field. This makes it easier to internationalize the form, as all strings are localized to the schema.
 
-Similarly, zod's `default` function can be used to set an initial value for the field. Because of this, `useZodform` does not require an "initial values" object to be created like a lot of other form libraries.
+Similarly, zod's `default` function can be used to set an initial value for the field. Because of this, `useZodform` does not require an "initial values" object to be created.
 
 ```tsx
 import {z} from 'zod'
 
-const string = z.string().min(1, "Too short")
+const stringSchema = z.string().min(1, "Too short")
 
 const nameSchema = z.object({
-    firstName: string.describe("First Name").default(""),
+    firstName: stringSchema.describe("First Name").default(""),
     // i18n label for last name
-    lastName: string.describe(i18n("labels.lastName")).default(""),
+    lastName: stringSchema.describe(i18n("labels.lastName")).default(""),
 });
 ```
 
@@ -63,9 +63,7 @@ import { SubmitHandler } from "usezodform"
 
 type FormSchema = z.infer<typeof schema>
 
-const onSubmit: SubmitHandler<FormSchema> = (data) => {
-  console.log(data)
-}
+const onSubmit: SubmitHandler<FormSchema> = (data) => console.log(data)
 ```
 
 ### Initialize the hook
@@ -118,7 +116,7 @@ return (
       </p>
     </div>
 
-    <button type="submit">
+    <button type="submit" aria-disabled={isSubmitting()}>
     {isSubmitting() ? "Submitting..." : "Submit"}
     </button>
 
@@ -147,10 +145,10 @@ The `useZodForm` hook returns the following methods. See the [UseZodFormReturn](
 | `getError` | Returns the error message for the field or empty string |
 | `setField` | Sets the field value |
 | `setError` | Sets the error message for the field |
-| `isValid` | Returns boolean if the form or field is valid |
 | `isSubmitting` | Returns boolean if the form is submitting |
-| `isTouched` | Returns boolean if the field has been touched |
-| `isDirty` |  Returns boolean if the field has been changed |
+| `isValid` | Returns boolean if the form or field is valid |
+| `isTouched` | Returns boolean if the form or field has been touched |
+| `isDirty` |  Returns boolean if the form or field has been changed |
 
 <br/>
 
@@ -172,7 +170,7 @@ The `getForm` method returns the following events.
 
 <br/>
 
-**Note**: In `controlled` mode, an `onChange` handler is returned. In `uncontrolled` mode, no handler is returned.
+**Note** * : In `controlled` mode, an `onChange` handler is returned. In `uncontrolled` mode, no change handler is returned.
 
 ### getField
 
@@ -187,7 +185,7 @@ The `getField` method returns the following data. See the [UseZodField](#types) 
 
 <br/>
 
-**Note**: In `controlled` mode, `value` will be returned. In `uncontrolled` mode, `defaultValue` will be returned instead.
+**Note**: In `controlled` mode, `value` will be returned. In `uncontrolled` mode, `defaultValue` will be returned.
 
 ### getError
 
@@ -200,7 +198,7 @@ const firstNameError =  getError("firstName")
 
 ### setField
 
-The `setField` method will update the value in form state for the given field. Returns `true` if the field is valid, `false` otherwise. **Note**: This method should only be used when you need to update the value in form state directly. For example, if you need to update the value of one field based on the value of another.
+The `setField` method will update the value in form state for the given field. Returns `true` if the field is valid and updated successfully, `false` otherwise. **Note**: This method should only be used when you need to update the value in form state directly. For example, if you need to update the value of one field based on the value of another.
 
 ```tsx
 // returns true if valid, false otherwise
@@ -238,12 +236,15 @@ The `isSubmitting` method will return a boolean indicating whether the form is c
 
 ### isDirty
 
-The `isDirty` method will return a boolean indicating whether the given field has been changed. **Note**: This does not work for the entire form; you must supply the name of the field.
+The `isDirty` method will return a boolean indicating whether the given field or, if no name is provided, whether any field in the form has been changed.
 
 ```tsx
 // returns true if valid, false otherwise
-const fieldResult = isDirty('firstName')
+const fieldDirty = isDirty('firstName')
+const formDirty = isDirty()
 ```
+
+## Reporting Issues
 
 If you encounter any issues, please [open an issue](https://github.com/garystorey/usezodform/issues/new)
 
@@ -289,9 +290,9 @@ export function Field(props: FieldProps) {
 <Field {...getField('firstName')} description="Enter your first name" />
 ```
 
-**Please Note:** This is ***not an accessible component***. This is just an example of how to create a custom component.
+**Please Note:** This is just an example. This is ***not an accessible component***.
 
-### Types
+## Types
 
 The following types are exported from the `useZodForm` hook.
 
@@ -324,11 +325,11 @@ type UseZodFormResult<T> = {
     getField: (name: keyof T, overrideMode?: UseZodFormMode) => UseZodField;
     getForm: () => UseZodFormFormEventHandlers;
     getError: (name: keyof T) => {};
-    setField: (name: keyof T, value: unknown) => boolean | undefined;
+    setField: (name: keyof T, value: unknown) => boolean;
     setError: (name: keyof T, value: string) => void;
-    isDirty: (name: keyof T) => boolean | undefined;
-    isTouched: (name: keyof T) => boolean | undefined;
-    isValid: (name?: keyof T) => any;
+    isDirty: (name?: keyof T) => boolean;
+    isTouched: (name?: keyof T) => boolean;
+    isValid: (name?: keyof T) => boolean;
     isSubmitting: () => boolean;
 };
 ```

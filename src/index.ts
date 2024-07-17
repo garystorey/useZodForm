@@ -73,18 +73,12 @@ export function useZodForm<SchemaType>(
 
   const setField = (name: keyof SchemaType, value: unknown): boolean => {
     if (!name) return false
-
-    values.current = {
-      ...values.current,
-      [name]: value,
-    }
-
     const result = schema.shape[name].safeParse(value)
-
+    console.log(result)
     if (result.success) {
       values.current = {
         ...values.current,
-        [name]: result.value,
+        [name]: value,
       }
       touched.current = {
         ...touched.current,
@@ -102,19 +96,6 @@ export function useZodForm<SchemaType>(
       })
       return true
     }
-
-    if ('error' in result) {
-      const issues = result.error.errors.reduce((acc: string, i: z.ZodIssue) => {
-        return (acc += i.message)
-      }, '')
-
-      setErrors((prevErrors: Record<string, string>) => {
-        return {
-          ...prevErrors,
-          [name]: issues,
-        }
-      })
-    }
     return false
   }
 
@@ -123,7 +104,11 @@ export function useZodForm<SchemaType>(
   const isValid = (name?: keyof SchemaType): boolean =>
     name ? schema.shape[name].safeParse(values.current[name]).success : valid
 
-  const isTouched = (name: keyof SchemaType): boolean => {
+  const isTouched = (name?: keyof SchemaType): boolean => {
+    if (!name) {
+      const touchedCount = Object.keys({ ...touched.current }).filter(Boolean).length
+      return touchedCount > 0
+    }
     const n = name as string
     if (n in touched.current) {
       return Boolean(touched.current[n])
@@ -131,7 +116,11 @@ export function useZodForm<SchemaType>(
     return false
   }
 
-  const isDirty = (name: keyof SchemaType): boolean => {
+  const isDirty = (name?: keyof SchemaType): boolean => {
+    if (!name) {
+      const dirtyCount = Object.keys({ ...dirty.current }).filter(Boolean).length
+      return dirtyCount > 0
+    }
     const n = name as string
     if (n in dirty.current) {
       return Boolean(dirty.current[n])
@@ -153,18 +142,18 @@ export function useZodForm<SchemaType>(
         submitting = false
         valid = false
         e.currentTarget.reset()
-      } else {
-        if ('error' in result) {
-          const issues = result.error.errors.reduce((acc: Record<string, string>, i: z.ZodIssue) => {
-            return {
-              ...acc,
-              [i.path.join('-')]: i.message,
-            }
-          }, {})
-          setErrors({ ...issues })
-          valid = false
-          submitting = false
-        }
+        return
+      }
+      if ('error' in result) {
+        const issues = result.error.errors.reduce((acc: Record<string, string>, i: z.ZodIssue) => {
+          return {
+            ...acc,
+            [i.path.join('-')]: i.message,
+          }
+        }, {})
+        setErrors({ ...issues })
+        valid = false
+        submitting = false
       }
     },
     [onSubmit, values, schema, initialString, initialValues],
@@ -373,10 +362,10 @@ export type UseZodFormResult<T> = {
   getField: (name: keyof T, overrideMode?: UseZodFormMode) => UseZodField
   getForm: () => UseZodFormFormEventHandlers
   getError: (name: keyof T) => {}
-  setField: (name: keyof T, value: unknown) => boolean | undefined
+  setField: (name: keyof T, value: unknown) => boolean
   setError: (name: keyof T, value: string) => void
-  isDirty: (name: keyof T) => boolean | undefined
-  isTouched: (name: keyof T) => boolean | undefined
-  isValid: (name?: keyof T) => any
+  isDirty: (name?: keyof T) => boolean
+  isTouched: (name?: keyof T) => boolean
+  isValid: (name?: keyof T) => boolean
   isSubmitting: () => boolean
 }
