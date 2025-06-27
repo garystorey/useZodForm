@@ -98,7 +98,7 @@ return (
       <label htmlFor={firstName.name}>{firstName.label}</label>
       <input type="text" 
         id={firstName.name} name={firstName.name} 
-        defaultvalue={firstName.value} 
+        defaultValue={firstName.defaultValue} 
       />
       <p>
       {firstName.error ? firstName.error : "Enter you first name"}
@@ -109,7 +109,7 @@ return (
       <label htmlFor={lastName.name}>{lastName.label}</label>
       <input type="text" 
         id={lastName.name} name={lastName.name} 
-        defaultValue={lastName.value} 
+        defaultValue={lastName.defaultValue} 
       />
       <p>
       {lastName.error ? lastName.error : "Enter you last name"}
