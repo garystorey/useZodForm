@@ -20,13 +20,13 @@ export function useZodForm<SchemaType>(
 
   const [errors, setErrors] = useState({ ...initialString })
 
-  const getValue = (name: keyof SchemaType) => {
-    if (!name) return ''
+  const getValue = (name?: keyof SchemaType) => {
+    if (!name) return values.current
     return values.current[name]
   }
   const getLabel = (name: keyof SchemaType): string => schema.shape[name].description ?? ''
 
-  const getError = (name: keyof SchemaType) => {
+  const getError = (name?: keyof SchemaType) => {
     if (!name) return errors
     return getByValue(errors, name as string) ?? errors
   }
