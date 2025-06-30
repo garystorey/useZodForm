@@ -1,6 +1,6 @@
 {
   "name": "usezodform",
-  "version": "0.5.91",
+  "version": "0.5.92",
   "description": "A React hook for managing form state using zod with no additional dependencies",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -27,10 +27,6 @@
     "react-dom": "^19.1.0",
     "tsup": "^8.5.0",
     "typescript": "^5.8.3",
-    "zod": "^3.25.67"
-  },
-  "dependencies": {
-    "react": "^19.1.0",
     "zod": "^3.25.67"
   },
   "peerDependencies": {
