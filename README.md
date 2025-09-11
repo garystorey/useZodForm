@@ -12,7 +12,7 @@ A React hook that provides a simple way to manage form state by handling form va
 ------------------
 <div style="font-size:1.2rem;padding:1rem">
 <strong>NOTICE</strong>:  This hook has been deprecated in favor of
-<a href="https://github.com/garystorey/use-standard-shema">use-standard-schema</a>
+<a href="https://www.npmjs.com/package/use-standard-schema">use-standard-schema</a>
  which works with any Standard Schema compliant validator (zod, valibot, ArkType, etc).
 </div>
 
