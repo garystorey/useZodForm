@@ -7,6 +7,19 @@
 
 A React hook that provides a simple way to manage form state by handling form validation, submission and field management, using a [zod](https://zod.dev) schema.
 
+<br/>
+
+------------------
+<div style="font-size:1.2rem;padding:1rem">
+<strong>NOTICE</strong>:  This hook has been deprecated in favor of
+<a href="https://github.com/garystorey/use-standard-shema">use-standard-schema</a>
+ which works with any Standard Schema compliant validator (zod, valibot, ArkType, etc).
+</div>
+
+------------------
+
+<br/>
+
 ## Table of contents
 
 - [Installation](#installation)
